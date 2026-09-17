@@ -1,5 +1,5 @@
 {
-  "name": "@vitra/core",
+  "name": "@vitra/layout",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -16,6 +16,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "@vitra/core": "workspace:*",
+    "yoga-layout": "^3.2.1"
   }
 }

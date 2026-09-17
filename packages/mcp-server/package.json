@@ -1,9 +1,12 @@
 {
-  "name": "@vitra/core",
+  "name": "@vitra/mcp-server",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "vitra-mcp": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,6 +19,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@vitra/core": "workspace:*",
+    "@vitra/layout": "workspace:*",
+    "@vitra/renderer": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.4",
     "zod": "^3.23.8"
   }
 }
