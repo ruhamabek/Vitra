@@ -12,6 +12,7 @@ import {
   saveVitraProject,
   loadVitraProject,
   deterministicStringify,
+  deepEqual,
   getHistoryDir,
   getHistoryDirSync,
 } from '../src/project.js';
@@ -35,6 +36,20 @@ describe('Vitra Project Bundle Engine (.vitra format)', () => {
     expect(str1).toBe(str2);
     expect(str1.indexOf('"a"')).toBeLessThan(str1.indexOf('"m"'));
     expect(str1.indexOf('"m"')).toBeLessThan(str1.indexOf('"z"'));
+  });
+
+  it('should correctly evaluate deep equality regardless of key ordering', () => {
+    const a = { x: 10, y: [1, 2, { nested: true, key: 'val' }] };
+    const b = { y: [1, 2, { key: 'val', nested: true }], x: 10 };
+    const c = { x: 10, y: [1, 2, { nested: false, key: 'val' }] };
+
+    expect(deepEqual(a, b)).toBe(true);
+    expect(deepEqual(a, c)).toBe(false);
+    expect(deepEqual(null, null)).toBe(true);
+    expect(deepEqual(null, undefined)).toBe(false);
+    expect(deepEqual(42, 42)).toBe(true);
+    expect(deepEqual('test', 'test')).toBe(true);
+    expect(deepEqual('test', 'other')).toBe(false);
   });
 
   it('should save and load a full .vitra project bundle', async () => {
