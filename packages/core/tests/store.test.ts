@@ -1,6 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { InMemorySceneStore } from '../src/store';
-import { createDocumentNode, createFrameNode, createTextNode } from '../src/nodes';
+import {
+  createDocumentNode,
+  createFrameNode,
+  createTextNode,
+  createShapeNode,
+} from '../src/nodes';
  
 describe('InMemorySceneStore', () => {
     it('should initialize with a root document node', () => { 
@@ -10,10 +15,9 @@ describe('InMemorySceneStore', () => {
          expect(store.getRoot().id).toBe('root')
          expect(store.getRoot().type).toBe('document');
          expect(store.getNode('root')).toBeDefined();
-    })
-});
+    });
 
-it('should allow inserting a frame child under the root document', () => {
+    it('should allow inserting a frame child under the root document', () => {
     const root = createDocumentNode({id: 'root', name: 'Document'});
     const store = new InMemorySceneStore(root);
 
@@ -153,3 +157,54 @@ it('should update node properties cleanly', () => {
       { type: 'delete', nodeId: 'f1' },
     ]);
   });
+
+  it('should support shape nodes (rectangles, ellipses) and visual effects (strokes, shadows)', () => {
+    const root = createDocumentNode({ id: 'root' });
+    const store = new InMemorySceneStore(root);
+
+     const card = createFrameNode({
+      id: 'styled-card',
+      name: 'Styled Card',
+      fill: '#181825',
+      stroke: '#313244',
+      strokeWidth: 1,
+      effects: [
+        {
+          type: 'drop-shadow',
+          color: 'rgba(0, 0, 0, 0.4)',
+          offsetX: 0,
+          offsetY: 8,
+          blur: 16,
+        },
+      ],
+    });
+
+     const avatar = createShapeNode({
+      id: 'avatar',
+      name: 'User Avatar',
+      shapeType: 'ellipse',
+      width: 48,
+      height: 48,
+      fill: '#89B4FA',
+    });
+
+    store.insertNode(card, 'root');
+    store.insertNode(avatar, 'styled-card');
+
+    const retrievedCard = store.getNode('styled-card');
+    expect(retrievedCard?.type).toBe('frame');
+    if (retrievedCard?.type === 'frame') {
+      expect(retrievedCard.stroke).toBe('#313244');
+      expect(retrievedCard.strokeWidth).toBe(1);
+      expect(retrievedCard.effects?.[0]?.type).toBe('drop-shadow');
+    }
+
+    const retrievedAvatar = store.getNode('avatar');
+    expect(retrievedAvatar?.type).toBe('shape');
+    if (retrievedAvatar?.type === 'shape') {
+      expect(retrievedAvatar.shapeType).toBe('ellipse');
+      expect(retrievedAvatar.width).toBe(48);
+      expect(retrievedAvatar.height).toBe(48);
+    }
+  });
+});

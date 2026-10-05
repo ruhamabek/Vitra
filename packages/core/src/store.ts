@@ -1,8 +1,8 @@
-import { DocumentNode, SceneNode } from "./nodes.js";
+import { DocumentNode, FrameNode, ArtboardNode, SceneNode } from "./nodes.js";
 
 
 export type SceneEvent =
-  | { type: 'insert'; nodeId: string; parentId: string }
+  | { type: 'insert'; nodeId: string; parentId: string; node: SceneNode }
   | { type: 'update'; nodeId: string; patch: Partial<SceneNode> }
   | { type: 'delete'; nodeId: string }
   | { type: 'move'; nodeId: string; newParentId: string; index?: number };
@@ -18,6 +18,8 @@ export interface ISceneStore {
   deleteNode(id: string): void;
   moveNode(id: string, newParentId: string, index?: number): void;
   subscribe(listener: SceneListener): () => void;
+  exportSnapshot(): { rootId: string; nodes: Record<string, SceneNode> };
+  importSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): void;
 }
 
 export class InMemorySceneStore implements ISceneStore {
@@ -58,7 +60,8 @@ export class InMemorySceneStore implements ISceneStore {
   getChildren(parentId: string): SceneNode[] {
     const parent = this.nodes.get(parentId);
     if (!parent) return [];
-    if (parent.type !== 'document' && parent.type !== 'frame') return [];
+    if (parent.type !== 'document' && parent.type !== 'frame' && parent.type !== 'artboard') return [];
+    if (!parent.childIds) return [];
 
     return parent.childIds
       .map(childId => this.nodes.get(childId))
@@ -70,34 +73,36 @@ export class InMemorySceneStore implements ISceneStore {
     if (!parent) {
       throw new Error(`Parent node "${parentId}" not found.`);
     }
-    if (parent.type !== 'document' && parent.type !== 'frame') {
+    if (parent.type !== 'document' && parent.type !== 'frame' && parent.type !== 'artboard') {
       throw new Error(`Cannot insert child into node "${parentId}" of type "${parent.type}".`);
     }
 
     const updatedChild = { ...node, parentId };
     this.nodes.set(node.id, updatedChild);
 
-    const newChildIds = [...parent.childIds];
+    const newChildIds = parent.childIds.filter(id => id !== node.id);
     if (typeof index === 'number' && index >= 0 && index <= newChildIds.length) {
       newChildIds.splice(index, 0, node.id);
     } else {
       newChildIds.push(node.id);
     }
 
-    this.nodes.set(parent.id, {
+    this.nodes.set(parentId, {
       ...parent,
       childIds: newChildIds,
     });
 
-    this.emit({ type: 'insert', nodeId: node.id, parentId });
+    this.emit({ type: 'insert', nodeId: node.id, parentId, node: updatedChild });
   }
 
   updateNode(id: string, patch: Partial<SceneNode>): void {
-    const existing = this.nodes.get(id);
-    if (!existing) {
+    const node = this.nodes.get(id);
+    if (!node) {
       throw new Error(`Node "${id}" not found.`);
     }
-    this.nodes.set(id, { ...existing, ...patch } as SceneNode);
+
+    const updated = { ...node, ...patch } as SceneNode;
+    this.nodes.set(id, updated);
     this.emit({ type: 'update', nodeId: id, patch });
   }
 
@@ -110,7 +115,7 @@ export class InMemorySceneStore implements ISceneStore {
 
     if (target.parentId) {
       const parent = this.nodes.get(target.parentId);
-      if (parent && (parent.type === 'document' || parent.type === 'frame')) {
+      if (parent && (parent.type === 'document' || parent.type === 'frame' || parent.type === 'artboard')) {
         this.nodes.set(parent.id, {
           ...parent,
           childIds: parent.childIds.filter(cid => cid !== id),
@@ -118,7 +123,7 @@ export class InMemorySceneStore implements ISceneStore {
       }
     }
 
-    if (target.type === 'document' || target.type === 'frame') {
+    if (target.type === 'document' || target.type === 'frame' || target.type === 'artboard') {
       for (const childId of target.childIds) {
         this.deleteNode(childId);
       }
@@ -141,13 +146,13 @@ export class InMemorySceneStore implements ISceneStore {
     if (!newParent) {
       throw new Error(`Target parent node "${newParentId}" not found.`);
     }
-    if (newParent.type !== 'document' && newParent.type !== 'frame') {
+    if (newParent.type !== 'document' && newParent.type !== 'frame' && newParent.type !== 'artboard') {
       throw new Error(`Cannot move node into target "${newParentId}" of type "${newParent.type}".`);
     }
 
     if (node.parentId) {
       const oldParent = this.nodes.get(node.parentId);
-      if (oldParent && (oldParent.type === 'document' || oldParent.type === 'frame')) {
+      if (oldParent && (oldParent.type === 'document' || oldParent.type === 'frame' || oldParent.type === 'artboard')) {
         this.nodes.set(oldParent.id, {
           ...oldParent,
           childIds: oldParent.childIds.filter(cid => cid !== id),
@@ -155,15 +160,16 @@ export class InMemorySceneStore implements ISceneStore {
       }
     }
 
-    const newChildIds = [...newParent.childIds];
+    const targetParent = (this.nodes.get(newParentId) as DocumentNode | FrameNode | ArtboardNode) || newParent;
+    const newChildIds = targetParent.childIds.filter((cid: string) => cid !== id);
     if (typeof index === 'number' && index >= 0 && index <= newChildIds.length) {
       newChildIds.splice(index, 0, id);
     } else {
       newChildIds.push(id);
     }
 
-    this.nodes.set(newParent.id, {
-      ...newParent,
+    this.nodes.set(targetParent.id, {
+      ...targetParent,
       childIds: newChildIds,
     });
 
@@ -173,5 +179,42 @@ export class InMemorySceneStore implements ISceneStore {
     });
 
     this.emit({ type: 'move', nodeId: id, newParentId, index });
+  }
+
+  exportSnapshot(): { rootId: string; nodes: Record<string, SceneNode> } {
+    const nodesObj: Record<string, SceneNode> = {};
+    for (const [id, node] of this.nodes.entries()) {
+      nodesObj[id] = node;
+    }
+    return {
+      rootId: this.rootId,
+      nodes: nodesObj,
+    };
+  }
+
+  importSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): void {
+    const rootNode = snapshot.nodes[snapshot.rootId];
+    if (!rootNode || rootNode.type !== 'document') {
+      throw new Error(`Invalid snapshot: root node "${snapshot.rootId}" is missing or not a document.`);
+    }
+    this.nodes.clear();
+    this.rootId = snapshot.rootId;
+    for (const [id, node] of Object.entries(snapshot.nodes)) {
+      this.nodes.set(id, node);
+    }
+  }
+
+  static fromSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): InMemorySceneStore {
+    const rootNode = snapshot.nodes[snapshot.rootId];
+    if (!rootNode || rootNode.type !== 'document') {
+      throw new Error(`Invalid snapshot: root node "${snapshot.rootId}" is missing or not a document.`);
+    }
+    const store = new InMemorySceneStore(rootNode as DocumentNode);
+    for (const [id, node] of Object.entries(snapshot.nodes)) {
+      if (id !== snapshot.rootId) {
+        store.nodes.set(id, node);
+      }
+    }
+    return store;
   }
 }
