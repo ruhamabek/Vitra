@@ -8,6 +8,7 @@ import {
   saveCommitSnapshot,
   deterministicStringify,
   getHistoryDirSync,
+  deepEqual,
 } from './project.js';
 import { resolveHead, updateHeadRef } from './refs.js';
 
@@ -47,9 +48,7 @@ export function isContainerNode(node: SceneNode): node is ContainerNode {
   return 'childIds' in node && Array.isArray((node as { childIds?: unknown }).childIds);
 }
 
-export type TokenTree = {
-  [key: string]: any;
-};
+export type TokenTree = Record<string, unknown>;
 
 export interface MergeTokensResult {
   tokens: TokenTree;
@@ -72,14 +71,6 @@ export interface MergeProjectResult {
   mergeCommitId?: string;
   conflicts: MergeConflict[];
   message: string;
-}
-
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
-    return false;
-  }
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 function cloneNode(node: SceneNode): SceneNode {

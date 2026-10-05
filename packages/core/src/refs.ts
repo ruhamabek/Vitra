@@ -152,8 +152,8 @@ export async function createBranch(
     if (!force) {
       throw new Error(`Branch "${branchName}" already exists.`);
     }
-  } catch (err: any) {
-    if (err.message?.includes('already exists')) throw err;
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('already exists')) throw err;
   }
 
   await fs.mkdir(path.dirname(branchPath), { recursive: true });

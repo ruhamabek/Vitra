@@ -208,7 +208,7 @@ export function createFrameNode(props: {
     cornerRadius: props.cornerRadius ?? 0,
     sizingHorizontal: props.sizingHorizontal ?? 'fixed',
     sizingVertical: props.sizingVertical ?? 'fixed',
-    childIds: props.childIds ?? (props as any).childIds ?? [],
+    childIds: props.childIds ?? [],
   });
 }
 

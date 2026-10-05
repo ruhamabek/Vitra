@@ -9,6 +9,11 @@ export type SceneEvent =
 
 export type SceneListener = (event: SceneEvent) => void;
 
+export interface SceneSnapshot {
+  rootId: string;
+  nodes: Record<string, SceneNode>;
+}
+
 export interface ISceneStore {
   getRoot(): DocumentNode;
   getNode(id: string): SceneNode | undefined;
@@ -18,8 +23,8 @@ export interface ISceneStore {
   deleteNode(id: string): void;
   moveNode(id: string, newParentId: string, index?: number): void;
   subscribe(listener: SceneListener): () => void;
-  exportSnapshot(): { rootId: string; nodes: Record<string, SceneNode> };
-  importSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): void;
+  exportSnapshot(): SceneSnapshot;
+  importSnapshot(snapshot: SceneSnapshot): void;
 }
 
 export class InMemorySceneStore implements ISceneStore {
@@ -192,7 +197,7 @@ export class InMemorySceneStore implements ISceneStore {
     };
   }
 
-  importSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): void {
+  importSnapshot(snapshot: SceneSnapshot): void {
     const rootNode = snapshot.nodes[snapshot.rootId];
     if (!rootNode || rootNode.type !== 'document') {
       throw new Error(`Invalid snapshot: root node "${snapshot.rootId}" is missing or not a document.`);
@@ -204,7 +209,7 @@ export class InMemorySceneStore implements ISceneStore {
     }
   }
 
-  static fromSnapshot(snapshot: { rootId: string; nodes: Record<string, SceneNode> }): InMemorySceneStore {
+  static fromSnapshot(snapshot: SceneSnapshot): InMemorySceneStore {
     const rootNode = snapshot.nodes[snapshot.rootId];
     if (!rootNode || rootNode.type !== 'document') {
       throw new Error(`Invalid snapshot: root node "${snapshot.rootId}" is missing or not a document.`);

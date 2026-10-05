@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import * as pathSync from 'node:path';
-import { InMemorySceneStore } from './store.js';
+import { InMemorySceneStore, SceneSnapshot } from './store.js';
 import { AgentCommit, AgentCommitSchema } from './history.js';
 
 async function getFs() {
@@ -55,6 +55,17 @@ export function deterministicStringify(obj: unknown, space: number = 2): string 
   }
 
   return JSON.stringify(sortKeys(obj), null, space) + '\n';
+}
+
+/**
+ * Performs a deep equality comparison between two values.
+ */
+export function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) {
+    return false;
+  }
+  return deterministicStringify(a, 0) === deterministicStringify(b, 0);
 }
 
 /**
@@ -176,7 +187,7 @@ export async function loadVitraProject(dirPath: string): Promise<LoadedVitraProj
 export async function saveCommitSnapshot(
   dirPath: string,
   commitId: string,
-  snapshot: any
+  snapshot: SceneSnapshot
 ): Promise<string> {
   const { fs, path } = await getFs();
   const historyDir = await getHistoryDir(dirPath);

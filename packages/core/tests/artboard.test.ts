@@ -5,6 +5,7 @@ import {
   createArtboardNode,
   createFrameNode,
   createTextNode,
+  ArtboardNode,
 } from '../src/nodes.js';
 
 describe('Vitra Artboard Spatial Model - TDD Suite', () => {
@@ -62,8 +63,8 @@ describe('Vitra Artboard Spatial Model - TDD Suite', () => {
 
     expect(store.getRoot().childIds).toEqual(['board-desktop', 'board-mobile']);
 
-    const desktopNode = store.getNode('board-desktop') as any;
-    const mobileNode = store.getNode('board-mobile') as any;
+    const desktopNode = store.getNode('board-desktop') as ArtboardNode;
+    const mobileNode = store.getNode('board-mobile') as ArtboardNode;
 
     expect(desktopNode?.type).toBe('artboard');
     expect(mobileNode?.type).toBe('artboard');

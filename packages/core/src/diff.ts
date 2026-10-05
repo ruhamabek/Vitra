@@ -1,4 +1,4 @@
-import { InMemorySceneStore } from './store.js';
+import { InMemorySceneStore, SceneSnapshot } from './store.js';
 import { SceneNode } from './nodes.js';
 import { AgentCommit } from './history.js';
 import { loadVitraProject, loadCommitSnapshot } from './project.js';
@@ -266,7 +266,7 @@ export async function diffProjectCommits(
     throw new Error(`Could not resolve commit reference: "${refA}"`);
   }
 
-  let snapshotB: any = null;
+  let snapshotB: SceneSnapshot | null = null;
   let titleB = '';
 
   if (refB === 'working' || !refB) {
