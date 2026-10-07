@@ -1,0 +1,20 @@
+{
+  "name": "@vitra/codegen",
+  "version": "0.1.0",
+  "description": "Multi-target production code export engine for Vitra (React, Tailwind CSS, SwiftUI)",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vitra/core": "workspace:*",
+    "@vitra/tokens": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  }
+}
