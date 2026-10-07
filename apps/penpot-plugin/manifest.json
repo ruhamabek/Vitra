@@ -1,0 +1,11 @@
+{
+  "name": "Vitra Live Sync",
+  "description": "Bidirectional live canvas sync with Vitra engine and AI agents",
+  "version": 2,
+  "code": "plugin.js",
+  "icon": "icon.png",
+  "permissions": [
+    "content:read",
+    "content:write"
+  ]
+}
