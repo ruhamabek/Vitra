@@ -116,6 +116,9 @@ describe('Vitra CLI Branch & Checkout Test Suite (Git-Style Refs)', () => {
       tokens: proj1.tokens,
       history: proj1.history,
     });
+    await commitProject(projectDir, {
+      message: 'Pink nav background',
+    });
 
  
     const checkPink = await loadVitraProject(projectDir);

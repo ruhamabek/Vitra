@@ -6,7 +6,7 @@ import {
   initProject,
   applyComponentToProject,
 } from '../src/index.js';
-import { loadVitraProject } from '@vitra/core';
+import { loadVitraProject, FrameNode, TextNode } from '@vitra/core';
 
 describe('Vitra CLI: apply command', () => {
   let tmpDir: string;
@@ -69,7 +69,7 @@ describe('Vitra CLI: apply command', () => {
 
     const btnTextNode = reloaded.store.getNode('cta-btn-text');
     expect(btnTextNode).toBeDefined();
-    expect((btnTextNode as any).text).toBe('Confirm Action');
+    expect((btnTextNode as TextNode).text).toBe('Confirm Action');
   });
 
   it('should atomically parse and insert a design.md component tree', async () => {
@@ -92,10 +92,10 @@ describe('Vitra CLI: apply command', () => {
     const reloaded = await loadVitraProject(tmpDir);
     const card = reloaded.store.getNode('pricing-card');
     expect(card).toBeDefined();
-    expect((card as any).cornerRadius).toBe(16);
+    expect((card as FrameNode).cornerRadius).toBe(16);
 
     const priceText = reloaded.store.getNode('price-value');
     expect(priceText).toBeDefined();
-    expect((priceText as any).text).toBe('$29/mo');
+    expect((priceText as TextNode).text).toBe('$29/mo');
   });
 });
