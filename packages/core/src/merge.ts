@@ -50,8 +50,8 @@ export function isContainerNode(node: SceneNode): node is ContainerNode {
 
 export type TokenTree = Record<string, unknown>;
 
-export interface MergeTokensResult {
-  tokens: TokenTree;
+export interface MergeTokensResult<T = TokenTree> {
+  tokens: T;
   conflicts: TokenConflict[];
 }
 
@@ -276,12 +276,12 @@ export function mergeSceneStores(
 /**
  * Performs a 3-way merge on design tokens dictionary.
  */
-export function mergeTokens(
+export function mergeTokens<T = TokenTree>(
   baseTokens: Record<string, unknown> = {},
   ourTokens: Record<string, unknown> = {},
   theirTokens: Record<string, unknown> = {},
   options: { strategy?: 'ours' | 'theirs' } = {}
-): MergeTokensResult {
+): MergeTokensResult<T> {
   const conflicts: TokenConflict[] = [];
 
   function mergeRecursive(
@@ -339,7 +339,7 @@ export function mergeTokens(
   }
 
   const merged = mergeRecursive(baseTokens, ourTokens, theirTokens);
-  return { tokens: merged as TokenTree, conflicts };
+  return { tokens: merged  as T, conflicts };
 }
 
 /**
