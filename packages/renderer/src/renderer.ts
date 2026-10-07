@@ -1,15 +1,48 @@
 import { ISceneStore, SceneNode } from '@vitra/core';
 import { LayoutNodeResult } from '@vitra/layout';
+import { TokenRegistry } from '@vitra/tokens';
 import { Resvg } from '@resvg/resvg-js';
+import fs from 'node:fs';
+import { getSvgIconContent } from './icons.js';
 
-export interface RenderPngOptions {
+export function getPlatformSansFont(): string {
+  if (process.platform === 'darwin') {
+    return 'Helvetica Neue';
+  }
+  if (process.platform === 'win32') {
+    return 'Segoe UI';
+  }
+  // Linux: check Cantarell (Fedora/GNOME) -> Noto Sans -> Liberation Sans -> DejaVu Sans
+  try {
+    if (fs.existsSync('/usr/share/fonts/abattis-cantarell-fonts') || fs.existsSync('/usr/share/fonts/cantarell')) {
+      return 'Cantarell';
+    }
+    if (fs.existsSync('/usr/share/fonts/google-noto-vf') || fs.existsSync('/usr/share/fonts/noto')) {
+      return 'Noto Sans';
+    }
+    if (fs.existsSync('/usr/share/fonts/liberation-sans-fonts') || fs.existsSync('/usr/share/fonts/liberation')) {
+      return 'Liberation Sans';
+    }
+    if (fs.existsSync('/usr/share/fonts/dejavu-sans-fonts') || fs.existsSync('/usr/share/fonts/dejavu')) {
+      return 'DejaVu Sans';
+    }
+  } catch {}
+  return 'sans-serif';
+}
+
+export interface RenderOptions {
+  tokenRegistry?: TokenRegistry;
+}
+
+export interface RenderPngOptions extends RenderOptions {
   scale?: number;
 }
 
 export function renderToSvg(
   store: ISceneStore,
   targetNodeId: string,
-  layout: LayoutNodeResult
+  layout: LayoutNodeResult,
+  options?: RenderOptions
 ): string {
   const targetNode = store.getNode(targetNodeId);
   if (!targetNode) {
@@ -17,14 +50,54 @@ export function renderToSvg(
   }
 
   const { width, height } = layout.bounds;
+  const registry = options?.tokenRegistry;
+
+  function resolveVal(val?: string | number): string | number | undefined {
+    if (typeof val === 'string' && val.startsWith('$') && registry) {
+      return registry.resolve(val);
+    }
+    return val;
+  }
+
+  const defs: string[] = [];
+
+  function getShadowFilterAttr(node: SceneNode): string {
+    if ('effects' in node && node.effects && node.effects.length > 0) {
+      const shadow = node.effects.find(e => e.type === 'drop-shadow');
+      if (shadow) {
+        const filterId = `shadow-${node.id}`;
+        const shadowColor = String(resolveVal(shadow.color) ?? shadow.color);
+        defs.push(`
+          <filter id="${filterId}" x="-20%" y="-20%" width="150%" height="150%">
+            <feDropShadow dx="${shadow.offsetX}" dy="${shadow.offsetY}" stdDeviation="${shadow.blur / 2}" flood-color="${shadowColor}" />
+          </filter>
+        `);
+        return `filter="url(#${filterId})"`;
+      }
+    }
+    return '';
+  }
+
+  function getStrokeAttr(node: SceneNode): string {
+    if ('stroke' in node && node.stroke) {
+      const strokeColor = resolveVal(node.stroke);
+      const width = ('strokeWidth' in node && node.strokeWidth) ? node.strokeWidth : 1;
+      return `stroke="${strokeColor}" stroke-width="${width}"`;
+    }
+    return '';
+  }
 
    function renderElement(node: SceneNode, nodeLayout: LayoutNodeResult): string {
     const { x, y, width: w, height: h } = nodeLayout.bounds;
+    const filterAttr = getShadowFilterAttr(node);
+    const strokeAttr = getStrokeAttr(node);
 
-    if (node.type === 'frame') {
-      const fillAttr = node.fill ? `fill="${node.fill}"` : 'fill="none"';
-      const rxAttr = node.cornerRadius ? `rx="${node.cornerRadius}" ry="${node.cornerRadius}"` : '';
-      
+    if (node.type === 'frame' || node.type === 'artboard') {
+      const resolvedFill = resolveVal(node.fill);
+      const fillAttr = resolvedFill ? `fill="${resolvedFill}"` : 'fill="none"';
+      const resolvedRadius = resolveVal(node.cornerRadius) ?? node.cornerRadius;
+      const rxAttr = resolvedRadius ? `rx="${resolvedRadius}" ry="${resolvedRadius}"` : '';
+
       const children = store.getChildren(node.id);
       const renderedChildren = children
         .map(child => {
@@ -36,19 +109,107 @@ export function renderToSvg(
 
       return `
         <g transform="translate(${x}, ${y})">
-          <rect width="${w}" height="${h}" ${fillAttr} ${rxAttr} />
+          <rect width="${w}" height="${h}" ${fillAttr} ${rxAttr} ${strokeAttr} ${filterAttr} />
           ${renderedChildren}
         </g>
       `;
     }
 
-    if (node.type === 'text') {
-      const textBaselineY = (node.fontSize ?? 16) * 0.85;
-      const fill = node.fill ?? '#000000';
-      const fontSize = node.fontSize ?? 16;
-      const fontWeight = node.fontWeight ?? 400;
+    if (node.type === 'shape') {
+      const resolvedFill = resolveVal(node.fill);
+      const fillAttr = resolvedFill ? `fill="${resolvedFill}"` : 'fill="none"';
 
-       const escapedText = node.text
+      if (node.shapeType === 'ellipse') {
+        const rx = w / 2;
+        const ry = h / 2;
+        return `
+          <g transform="translate(${x}, ${y})">
+            <ellipse cx="${rx}" cy="${ry}" rx="${rx}" ry="${ry}" ${fillAttr} ${strokeAttr} ${filterAttr} />
+          </g>
+        `;
+      }
+
+      if (node.shapeType === 'divider') {
+        const strokeColor = resolveVal(node.stroke ?? node.fill) ?? '#E2E8F0';
+        const strokeW = resolveVal(node.strokeWidth) ?? Math.max(1, h);
+        return `
+          <g transform="translate(${x}, ${y})">
+            <line x1="0" y1="${h / 2}" x2="${w}" y2="${h / 2}" stroke="${strokeColor}" stroke-width="${strokeW}" ${filterAttr} />
+          </g>
+        `;
+      }
+
+      // Default: rectangle shape
+      const resolvedRadius = resolveVal(node.cornerRadius) ?? node.cornerRadius;
+      const rxAttr = resolvedRadius ? `rx="${resolvedRadius}" ry="${resolvedRadius}"` : '';
+      return `
+        <g transform="translate(${x}, ${y})">
+          <rect width="${w}" height="${h}" ${fillAttr} ${rxAttr} ${strokeAttr} ${filterAttr} />
+        </g>
+      `;
+    }
+
+    if (node.type === 'icon') {
+      const stroke = resolveVal(node.color) ?? '#FFFFFF';
+      const fill = resolveVal(node.fill) ?? 'none';
+      const strokeW = node.strokeWidth ?? 2;
+      const iconContent = getSvgIconContent(node.icon);
+
+      return `
+        <g transform="translate(${x}, ${y})">
+          <svg width="${w}" height="${h}" viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="${strokeW}" stroke-linecap="round" stroke-linejoin="round" ${filterAttr}>
+            ${iconContent}
+          </svg>
+        </g>
+      `;
+    }
+
+    if (node.type === 'text') {
+      const fontSize = Number(resolveVal(node.fontSize) ?? 16);
+      const lineHeight = Number(resolveVal(node.lineHeight) ?? fontSize * 1.35);
+      const fill = resolveVal(node.fill) ?? '#000000';
+      const fontWeight = resolveVal(node.fontWeight) ?? 400;
+
+      if (node.wrap) {
+        const wrapLimit = (node.maxWidth && node.maxWidth > 0) ? node.maxWidth : 260;
+        const words = node.text.split(' ');
+        const lines: string[] = [];
+        let currentLine = '';
+
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          const estWidth = testLine.length * fontSize * 0.55;
+          if (estWidth > wrapLimit && currentLine) {
+            lines.push(currentLine);
+            currentLine = word;
+          } else {
+            currentLine = testLine;
+          }
+        }
+        if (currentLine) lines.push(currentLine);
+
+        const tspans = lines
+          .map((line, idx) => {
+            const dy = idx === 0 ? fontSize * 0.85 : lineHeight;
+            const escaped = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return `<tspan x="0" dy="${dy}">${escaped}</tspan>`;
+          })
+          .join('');
+
+        return `
+          <g transform="translate(${x}, ${y})">
+            <text
+              fill="${fill}"
+              font-size="${fontSize}"
+              font-weight="${fontWeight}"
+              font-family="${primaryFont}, sans-serif"
+              ${filterAttr}
+            >${tspans}</text>
+          </g>
+        `;
+      }
+
+      const escapedText = node.text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
@@ -57,11 +218,13 @@ export function renderToSvg(
         <g transform="translate(${x}, ${y})">
           <text
             x="0"
-            y="${textBaselineY}"
+            y="${Math.round(h / 2)}"
+            dominant-baseline="central"
             fill="${fill}"
             font-size="${fontSize}"
             font-weight="${fontWeight}"
-            font-family="system-ui, -apple-system, sans-serif"
+            font-family="${primaryFont}, sans-serif"
+            ${filterAttr}
           >${escapedText}</text>
         </g>
       `;
@@ -70,12 +233,16 @@ export function renderToSvg(
     return '';
   }
 
+  const primaryFont = getPlatformSansFont();
   const content = renderElement(targetNode, {
     ...layout,
-    bounds: { ...layout.bounds, x: 0, y: 0 }, // Root renders at (0, 0) in SVG viewport
+    bounds: { ...layout.bounds, x: 0, y: 0 },
   });
 
+  const defsBlock = defs.length > 0 ? `<defs>${defs.join('\n')}</defs>` : '';
+
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+${defsBlock}
 ${content}
 </svg>`;
 }
@@ -84,8 +251,17 @@ export async function renderToPng(
   svg: string,
   options?: RenderPngOptions
 ): Promise<Buffer> {
+  const primaryFont = getPlatformSansFont();
   const resvg = new Resvg(svg, {
     fitTo: options?.scale ? { mode: 'zoom', value: options.scale } : { mode: 'original' },
+    font: {
+      loadSystemFonts: true,
+      defaultFontFamily: primaryFont,
+      sansSerifFamily: primaryFont,
+    },
+    textRendering: 1,
+    shapeRendering: 2,
+    imageRendering: 0,
   });
 
   const pngData = resvg.render();

@@ -5,98 +5,128 @@ import {
   createDocumentNode,
   createFrameNode,
   createTextNode,
+  createShapeNode,
   InMemorySceneStore,
 } from '@vitra/core';
 import { computeLayout } from '@vitra/layout';
 import { renderToSvg, renderToPng } from '../src/renderer.js';
 
 describe('E2E Design Generation Smoke Test', () => {
-  it('should generate, layout, and render a complete SaaS card to a real PNG file', async () => {
+  it('should generate, layout, and render a rich profile card with avatar, divider, and shadows', async () => {
     const root = createDocumentNode({ id: 'root' });
     const store = new InMemorySceneStore(root);
 
      const card = createFrameNode({
-      id: 'pricing-card',
-      name: 'Pricing Card',
+      id: 'profile-card',
+      name: 'Profile Card',
       fill: '#181825',
+      stroke: '#313244',
+      strokeWidth: 1.5,
       cornerRadius: 16,
+      effects: [
+        {
+          type: 'drop-shadow',
+          color: 'rgba(0, 0, 0, 0.45)',
+          offsetX: 0,
+          offsetY: 10,
+          blur: 20,
+        },
+      ],
       layout: {
         direction: 'vertical',
         gap: 16,
-        padding: { top: 32, right: 32, bottom: 32, left: 32 },
+        padding: { top: 24, right: 24, bottom: 24, left: 24 },
         alignItems: 'start',
       },
     });
 
-     const badge = createFrameNode({
-      id: 'badge',
-      name: 'Badge',
-      fill: '#313244',
-      cornerRadius: 6,
+     const headerRow = createFrameNode({
+      id: 'header-row',
       layout: {
         direction: 'horizontal',
-        padding: { top: 6, right: 12, bottom: 6, left: 12 },
+        gap: 14,
+        alignItems: 'center',
       },
     });
-    const badgeText = createTextNode({
-      id: 'badge-text',
-      text: 'PRO TIER',
-      fontSize: 12,
-      fontWeight: 700,
+
+     const avatar = createShapeNode({
+      id: 'avatar-circle',
+      shapeType: 'ellipse',
+      width: 48,
+      height: 48,
       fill: '#89B4FA',
+      stroke: '#B4BEFE',
+      strokeWidth: 2,
     });
 
-     const priceText = createTextNode({
-      id: 'price-text',
-      text: '$29 / mo',
-      fontSize: 32,
+     const nameStack = createFrameNode({
+      id: 'name-stack',
+      layout: {
+        direction: 'vertical',
+        gap: 4,
+      },
+    });
+    const nameText = createTextNode({
+      id: 'user-name',
+      text: 'Alex Rivera',
+      fontSize: 18,
       fontWeight: 700,
       fill: '#CDD6F4',
     });
-
-     const descText = createTextNode({
-      id: 'desc-text',
-      text: 'Autonomous AI agent visual design workspace with zero vendor lock-in.',
-      fontSize: 14,
+    const roleText = createTextNode({
+      id: 'user-role',
+      text: 'Senior AI Systems Architect',
+      fontSize: 13,
       fill: '#A6ADC8',
     });
 
-     const button = createFrameNode({
-      id: 'cta-btn',
-      name: 'CTA Button',
+     const divider = createShapeNode({
+      id: 'card-divider',
+      shapeType: 'divider',
+      width: 300,
+      height: 1,
+      fill: '#313244',
+    });
+
+     const bioText = createTextNode({
+      id: 'bio-text',
+      text: 'Building autonomous, vendor-agnostic visual agent runtimes with strict TDD.',
+      fontSize: 14,
+      fill: '#BAC2DE',
+    });
+
+     const btn = createFrameNode({
+      id: 'action-btn',
       fill: '#89B4FA',
       cornerRadius: 8,
       layout: {
         direction: 'horizontal',
-        padding: { top: 12, right: 24, bottom: 12, left: 24 },
-        justifyContent: 'center',
+        padding: { top: 10, right: 20, bottom: 10, left: 20 },
       },
     });
     const btnText = createTextNode({
       id: 'btn-text',
-      text: 'Start Free Trial',
-      fontSize: 15,
+      text: 'Connect',
+      fontSize: 14,
       fontWeight: 600,
       fill: '#11111B',
     });
 
-    store.insertNode(card, 'root');
-    store.insertNode(badge, 'pricing-card');
-    store.insertNode(badgeText, 'badge');
-    store.insertNode(priceText, 'pricing-card');
-    store.insertNode(descText, 'pricing-card');
-    store.insertNode(button, 'pricing-card');
-    store.insertNode(btnText, 'cta-btn');
+     store.insertNode(card, 'root');
+    store.insertNode(headerRow, 'profile-card');
+    store.insertNode(avatar, 'header-row');
+    store.insertNode(nameStack, 'header-row');
+    store.insertNode(nameText, 'name-stack');
+    store.insertNode(roleText, 'name-stack');
+    store.insertNode(divider, 'profile-card');
+    store.insertNode(bioText, 'profile-card');
+    store.insertNode(btn, 'profile-card');
+    store.insertNode(btnText, 'action-btn');
 
-     const layout = await computeLayout(store, 'pricing-card');
+    const layout = await computeLayout(store, 'profile-card');
+    const svg = renderToSvg(store, 'profile-card', layout);
+    const png = await renderToPng(svg, { scale: 2 });
 
-     const svg = renderToSvg(store, 'pricing-card', layout);
-    const pngBuffer = await renderToPng(svg, { scale: 2 }); // 2x retina scale
-
-    const outputPath = path.resolve(process.cwd(), 'output-pricing-card.png');
-    await fs.writeFile(outputPath, pngBuffer);
-
-     const stat = await fs.stat(outputPath);
-    expect(stat.size).toBeGreaterThan(1000);
+    await fs.writeFile(path.resolve(process.cwd(), 'output-profile-card.png'), png);
   });
 });

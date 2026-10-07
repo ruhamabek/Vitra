@@ -16,8 +16,10 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@vitra/core": "workspace:*",
     "@vitra/layout": "workspace:*",
-    "@resvg/resvg-js": "^2.6.2"
+    "@vitra/tokens": "workspace:*",
+    "lucide": "^1.48.0"
   }
 }
