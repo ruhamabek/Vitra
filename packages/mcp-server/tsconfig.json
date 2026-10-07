@@ -8,6 +8,10 @@
   "references": [
     { "path": "../core" },
     { "path": "../layout" },
-    { "path": "../renderer" }
+    { "path": "../renderer" },
+    { "path": "../tokens" },
+    { "path": "../sync" },
+    { "path": "../eval" },
+    { "path": "../codegen" }
   ]
 }

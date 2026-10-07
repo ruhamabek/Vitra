@@ -23,7 +23,9 @@ describe('Vitra MCP Server (Agent Interface)', () => {
     const toolNames = tools.tools.map(t => t.name);
     expect(toolNames).toContain('create_frame');
     expect(toolNames).toContain('create_text');
+    expect(toolNames).toContain('insert_component');
     expect(toolNames).toContain('render_viewport');
+    expect(toolNames).toContain('audit_design');
 
     const frameResult = await client.callTool({
       name: 'create_frame',
@@ -56,6 +58,20 @@ describe('Vitra MCP Server (Agent Interface)', () => {
     expect(textResult.isError).toBeFalsy();
     expect(store.getNode('title-node')).toBeDefined();
 
+     const shapeResult = await client.callTool({
+      name: 'create_shape',
+      arguments: {
+        id: 'status-dot',
+        parentId: 'hero-card',
+        shapeType: 'ellipse',
+        width: 12,
+        height: 12,
+        fill: '#A6E3A1',
+      },
+    });
+    expect(shapeResult.isError).toBeFalsy();
+    expect(store.getNode('status-dot')).toBeDefined();
+
      const renderResult = await client.callTool({
       name: 'render_viewport',
       arguments: {
@@ -68,6 +84,81 @@ describe('Vitra MCP Server (Agent Interface)', () => {
     expect(content.length).toBeGreaterThan(0);
     const imageBlock = content.find(c => c.type === 'image');
     expect(imageBlock).toBeDefined();
-    expect(imageBlock?.data).toBeDefined();  
+    expect(imageBlock?.data).toBeDefined();
+
+     const auditResult = await client.callTool({
+      name: 'audit_design',
+      arguments: {
+        nodeId: 'hero-card',
+      },
+    });
+    expect(auditResult.isError).toBeFalsy();
+    const auditContent = auditResult.content as Array<{ type: string; text: string }>;
+    const report = JSON.parse(auditContent[0]?.text ?? '{}');
+    expect(report.score).toBeDefined();
+    expect(report.valid).toBe(true);
+
+     const codeResult = await client.callTool({
+      name: 'export_code',
+      arguments: {
+        nodeId: 'hero-card',
+        target: 'react-tailwind',
+        componentName: 'HeroCard',
+      },
+    });
+    expect(codeResult.isError).toBeFalsy();
+    const codeContent = codeResult.content as Array<{ type: string; text: string }>;
+    expect(codeContent[0]?.text).toContain('export function HeroCard()');
+    expect(codeContent[0]?.text).toContain('flex flex-col gap-3');
+    expect(codeContent[0]?.text).toContain('bg-[#1E1E2E]');
+    expect(codeContent[0]?.text).toContain('AI-Native Design Runtime');
+
+     const insertResult = await client.callTool({
+      name: 'insert_component',
+      arguments: {
+        parentId: 'root',
+        component: {
+          id: 'stats-modal',
+          type: 'frame',
+          name: 'Stats Modal',
+          fill: '#181825',
+          children: [
+            {
+              id: 'stats-header',
+              type: 'text',
+              text: 'System Metrics',
+              fontSize: 18,
+              fill: '#FFFFFF',
+            },
+            {
+              id: 'stats-badge',
+              type: 'frame',
+              width: 80,
+              height: 24,
+              fill: '#89B4FA',
+              children: [
+                {
+                  id: 'stats-badge-text',
+                  type: 'text',
+                  text: 'Optimal',
+                  fontSize: 12,
+                  fill: '#11111B',
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+    expect(insertResult.isError).toBeFalsy();
+    expect(store.getNode('stats-modal')).toBeDefined();
+    expect(store.getNode('stats-header')).toBeDefined();
+    expect(store.getNode('stats-badge')).toBeDefined();
+    expect(store.getNode('stats-badge-text')).toBeDefined();
+    const modalChildIds = store.getChildren('stats-modal').map((n) => n.id);
+    expect(modalChildIds).toContain('stats-header');
+    expect(modalChildIds).toContain('stats-badge');
+    const badgeChildIds = store.getChildren('stats-badge').map((n) => n.id);
+    expect(badgeChildIds).toContain('stats-badge-text');
   });
 });
