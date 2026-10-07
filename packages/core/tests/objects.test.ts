@@ -111,7 +111,7 @@ describe('Vitra Content-Addressed Git Object Store (zlib deflate/inflate & SHA-1
       type: 'text',
       name: 'Logo',
       parentId: 'nav-frame',
-      text: 'ScholarXIV',
+      text: 'Test',
       fontSize: 18,
       fontWeight: 400,
       fill: '#FFFFFF',
@@ -138,7 +138,7 @@ describe('Vitra Content-Addressed Git Object Store (zlib deflate/inflate & SHA-1
     expect(restoredStore.getNode('nav-frame')).toBeDefined();
     expect((restoredStore.getNode('nav-frame') as FrameNode).cornerRadius).toBe(8);
     expect(restoredStore.getNode('nav-title')).toBeDefined();
-    expect((restoredStore.getNode('nav-title') as TextNode).text).toBe('ScholarXIV');
+    expect((restoredStore.getNode('nav-title') as TextNode).text).toBe('Test');
     expect((restoredStore.getNode('nav-title') as TextNode).fill).toBe('#FFFFFF');
   });
 

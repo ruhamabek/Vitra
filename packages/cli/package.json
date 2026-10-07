@@ -1,21 +1,17 @@
 {
-  "name": "@vitra/core",
+  "name": "@vitra/cli",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",
-  "browser": "./dist/browser.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "vitra": "./dist/bin.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "browser": "./dist/browser.js",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./browser": {
-      "types": "./dist/browser.d.ts",
-      "import": "./dist/browser.js",
-      "default": "./dist/browser.js"
     }
   },
   "scripts": {
@@ -23,6 +19,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "@vitra/core": "workspace:*",
+    "@vitra/layout": "workspace:*",
+    "@vitra/tokens": "workspace:*",
+    "@vitra/renderer": "workspace:*",
+    "@vitra/codegen": "workspace:*",
+    "@vitra/eval": "workspace:*",
+    "@vitra/sync": "workspace:*"
   }
 }

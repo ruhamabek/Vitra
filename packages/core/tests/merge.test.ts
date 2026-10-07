@@ -346,7 +346,18 @@ describe('Vitra 3-Way AST Merge Engine', () => {
         },
       };
 
-      const result = mergeTokens(baseTokens, ourTokens, theirTokens);
+      interface MergedTokens {
+        color: {
+          primary: { $value: string; $type?: string };
+          secondary?: { $value: string; $type?: string };
+          accent: { $value: string; $type?: string };
+        };
+        spacing: {
+          sm: { $value: string; $type?: string };
+        };
+      }
+
+      const result = mergeTokens<MergedTokens>(baseTokens, ourTokens, theirTokens);
       expect(result.conflicts).toHaveLength(0);
       expect(result.tokens.color.primary.$value).toBe('#10B981'); // from ours
       expect(result.tokens.color.accent.$value).toBe('#8B5CF6'); // from theirs

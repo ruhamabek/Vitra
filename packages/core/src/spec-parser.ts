@@ -91,6 +91,19 @@ export function parseDesignMarkdown(markdown: string): DeclarativeNode {
     if (attrs.r !== undefined) node.cornerRadius = Number(attrs.r);
     if (attrs.cornerRadius !== undefined) node.cornerRadius = Number(attrs.cornerRadius);
 
+    if (attrs.shadow !== undefined) {
+      const offset = typeof attrs.shadow === 'number' ? attrs.shadow : Number(attrs.shadow) || 4;
+      node.effects = [
+        {
+          type: 'drop-shadow',
+          color: '#000000',
+          offsetX: offset,
+          offsetY: offset,
+          blur: 0,
+        },
+      ];
+    }
+
     if (attrs.dir || attrs.gap !== undefined || attrs.pad !== undefined || attrs.align || attrs.justify) {
       const pad = attrs.pad !== undefined ? Number(attrs.pad) : undefined;
       const alignStr = String(attrs.align || '');
