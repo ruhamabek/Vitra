@@ -20,11 +20,50 @@ export interface LayoutOptions {
   textMeasurer?: TextMeasurer;
 }
 
-const defaultTextMeasurer: TextMeasurer = (node: TextNode) => {
-  const charWidth = (node.fontSize ?? 16) * 0.55;
-  const width = Math.max(10, Math.round(node.text.length * charWidth));
-  const height = Math.round((node.lineHeight ?? (node.fontSize ?? 16) * 1.25));
-  return { width, height };
+export const defaultTextMeasurer: TextMeasurer = (node: TextNode) => {
+  const fontSize = node.fontSize ?? 16;
+  const weightMultiplier = (node.fontWeight ?? 400) >= 600 ? 1.15 : 1.0;
+
+  let totalWidth = 0;
+  for (const char of node.text) {
+    if (char === ' ') {
+      totalWidth += fontSize * 0.28;
+    } else if (
+      char === 'i' ||
+      char === 'l' ||
+      char === 'I' ||
+      char === '|' ||
+      char === '.' ||
+      char === ':' ||
+      char === ';' ||
+      char === '!' ||
+      char === "'"
+    ) {
+      totalWidth += fontSize * 0.32;
+    } else if (char >= 'A' && char <= 'Z') {
+      totalWidth += fontSize * 0.72;
+    } else if (char === 'm' || char === 'w' || char === 'M' || char === 'W') {
+      totalWidth += fontSize * 0.88;
+    } else if (char.charCodeAt(0) > 127) {
+       totalWidth += fontSize * 0.88;
+    } else {
+      totalWidth += fontSize * 0.54;
+    }
+  }
+
+  const rawWidth = Math.max(10, Math.round(totalWidth * weightMultiplier));
+  const baseLineHeight = Math.round(node.lineHeight ?? fontSize * 1.35);
+
+  const wrapLimit = node.maxWidth && node.maxWidth > 0 ? node.maxWidth : (node.wrap ? 260 : undefined);
+  if (node.wrap && wrapLimit && rawWidth > wrapLimit) {
+    const lineCount = Math.max(1, Math.ceil(rawWidth / wrapLimit));
+    return {
+      width: wrapLimit,
+      height: lineCount * baseLineHeight,
+    };
+  }
+
+  return { width: rawWidth, height: baseLineHeight };
 };
 
 export async function computeLayout(
@@ -39,16 +78,39 @@ export async function computeLayout(
 
   const measurer = options?.textMeasurer ?? defaultTextMeasurer;
 
-   function buildYogaTree(node: SceneNode): { yogaNode: YogaNode; cleanup: () => void } {
+   function buildYogaTree(node: SceneNode, parentNode?: SceneNode): { yogaNode: YogaNode; cleanup: () => void } {
     const yNode = Yoga.Node.create();
     const cleanupFns: Array<() => void> = [() => yNode.free()];
 
-    if (node.type === 'frame') {
+    const parentDirection = (parentNode?.type === 'frame' || parentNode?.type === 'artboard') && parentNode.layout?.direction
+      ? parentNode.layout.direction
+      : 'vertical';
+
+    if (node.type === 'frame' || node.type === 'artboard') {
       if (node.width !== undefined) {
         yNode.setWidth(node.width);
       }
       if (node.height !== undefined) {
         yNode.setHeight(node.height);
+      }
+
+      if ('sizingVertical' in node && node.sizingVertical === 'fill') {
+        if (parentDirection === 'vertical') {
+          yNode.setFlexGrow(1);
+          yNode.setFlexShrink(1);
+        } else {
+          yNode.setAlignSelf(Yoga.ALIGN_STRETCH);
+          yNode.setHeightPercent(100);
+        }
+      }
+      if ('sizingHorizontal' in node && node.sizingHorizontal === 'fill') {
+        if (parentDirection === 'horizontal') {
+          yNode.setFlexGrow(1);
+          yNode.setFlexShrink(1);
+        } else {
+          yNode.setAlignSelf(Yoga.ALIGN_STRETCH);
+          yNode.setWidthPercent(100);
+        }
       }
 
       if (node.layout) {
@@ -96,7 +158,7 @@ export async function computeLayout(
 
        const children = store.getChildren(node.id);
       children.forEach((child, index) => {
-        const childRes = buildYogaTree(child);
+        const childRes = buildYogaTree(child, node);
         cleanupFns.push(childRes.cleanup);
 
         if (index > 0 && node.layout?.gap) {
@@ -113,6 +175,16 @@ export async function computeLayout(
       const dimensions = measurer(node);
       yNode.setWidth(dimensions.width);
       yNode.setHeight(dimensions.height);
+      if (node.maxWidth) {
+        yNode.setMaxWidth(node.maxWidth);
+      }
+    } else if (node.type === 'shape') {
+      yNode.setWidth(node.width ?? 100);
+      yNode.setHeight(node.height ?? 100);
+    } else if (node.type === 'icon') {
+      const size = node.size ?? 20;
+      yNode.setWidth(size);
+      yNode.setHeight(size);
     }
 
     return {
@@ -139,7 +211,7 @@ export async function computeLayout(
       };
 
       const childrenResults: LayoutNodeResult[] = [];
-      if (node.type === 'frame') {
+      if (node.type === 'frame' || node.type === 'artboard') {
         const children = store.getChildren(node.id);
         children.forEach((child, index) => {
           const childYogaNode = yNode.getChild(index);
