@@ -43,29 +43,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Build workspace dependencies
-        run: pnpm --filter @vitra/core build
+      - name: Build all workspace packages
+        run: pnpm --filter ...@vitra/cli build
 
-      - name: Build and cross-compile standalone native binaries
+      - name: Bundle standalone executable (inlining workspace packages)
         run: |
           mkdir -p binaries
-          
-          echo "Building Linux x64 binary..."
-          bun build --compile --target=bun-linux-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-linux-x64
-
-          echo "Building Linux ARM64 binary..."
-          bun build --compile --target=bun-linux-arm64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-linux-arm64
-
-          echo "Building macOS Intel x64 binary..."
-          bun build --compile --target=bun-darwin-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-darwin-x64
-
-          echo "Building macOS Apple Silicon arm64 binary..."
-          bun build --compile --target=bun-darwin-arm64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-darwin-arm64
-
-          echo "Building Windows x64 binary..."
-          bun build --compile --target=bun-windows-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-windows-x64.exe
-
-          echo "Building portable JS bundle..."
           npx esbuild ./packages/cli/dist/bin.js \
             --bundle \
             --platform=node \
@@ -76,6 +59,23 @@ jobs:
             --external:@resvg/resvg-js \
             --external:ws \
             --sourcemap=false
+
+      - name: Cross-compile standalone native binaries
+        run: |
+          echo "Building Linux x64 binary..."
+          bun build --compile --target=bun-linux-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-linux-x64
+
+          echo "Building Linux ARM64 binary..."
+          bun build --compile --target=bun-linux-arm64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-linux-arm64
+
+          echo "Building macOS Intel x64 binary..."
+          bun build --compile --target=bun-darwin-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-darwin-x64
+
+          echo "Building macOS Apple Silicon arm64 binary..."
+          bun build --compile --target=bun-darwin-arm64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-darwin-arm64
+
+          echo "Building Windows x64 binary..."
+          bun build --compile --target=bun-windows-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-windows-x64.exe
 
           ls -lh binaries/
 
