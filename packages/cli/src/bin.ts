@@ -66,17 +66,19 @@ const HELP_TEXT = `
 `;
 
 async function main() {
-  const args = process.argv.slice(2);
+  const execBase = path.basename(process.argv[0] || '').toLowerCase();
+  const isInterpreter = execBase.startsWith('node') || execBase.startsWith('bun');
+  const args = isInterpreter ? process.argv.slice(2) : process.argv.slice(1);
   const command = args[0];
 
   if (!command || command === '--help' || command === '-h') {
-    console.log(HELP_TEXT);
-    process.exit(0);
+    process.stdout.write(HELP_TEXT + '\n');
+    return;
   }
 
   if (command === '--version' || command === '-v') {
-    console.log('0.1.0');
-    process.exit(0);
+    process.stdout.write('0.1.0\n');
+    return;
   }
 
   try {

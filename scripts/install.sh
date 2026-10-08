@@ -46,13 +46,23 @@ mkdir -p "$INSTALL_DIR"
 DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${RELEASE_NAME}"
 FALLBACK_URL="https://github.com/${REPO}/releases/latest/download/vitra"
 
+TMP_FILE="$INSTALL_DIR/.vitra.download.tmp"
+trap 'rm -f "$TMP_FILE"' EXIT INT TERM
+
 echo "⏳ Downloading Vitra CLI for ${PLATFORM}-${TARGET_ARCH}..."
 
-HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$INSTALL_DIR/$BINARY_NAME" "$DOWNLOAD_URL" || true)
+if curl -fL --progress-bar -o "$TMP_FILE" "$DOWNLOAD_URL"; then
+  mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+else
+  echo "ℹ️  Native binary not available, downloading portable universal bundle..."
+  curl -fL --progress-bar -o "$TMP_FILE" "$FALLBACK_URL"
+  mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+fi
 
-if [ "$HTTP_CODE" -ne 200 ] || [ ! -s "$INSTALL_DIR/$BINARY_NAME" ]; then
-  echo "ℹ️  Downloading portable universal bundle..."
-  curl -fsSL -o "$INSTALL_DIR/$BINARY_NAME" "$FALLBACK_URL"
+if [ ! -s "$INSTALL_DIR/$BINARY_NAME" ]; then
+  echo "❌ Download failed or file is empty."
+  rm -f "$INSTALL_DIR/$BINARY_NAME"
+  exit 1
 fi
 
 chmod +x "$INSTALL_DIR/$BINARY_NAME"
