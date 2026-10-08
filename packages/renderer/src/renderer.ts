@@ -1,7 +1,6 @@
 import { ISceneStore, SceneNode } from '@vitra/core';
 import { LayoutNodeResult } from '@vitra/layout';
 import { TokenRegistry } from '@vitra/tokens';
-import { Resvg } from '@resvg/resvg-js';
 import fs from 'node:fs';
 import { getSvgIconContent } from './icons.js';
 
@@ -252,7 +251,17 @@ export async function renderToPng(
   options?: RenderPngOptions
 ): Promise<Buffer> {
   const primaryFont = getPlatformSansFont();
-  const resvg = new Resvg(svg, {
+  let ResvgClass: any;
+  try {
+    const resvgModule = await import('@resvg/resvg-js');
+    ResvgClass = resvgModule.Resvg;
+  } catch {
+    throw new Error(
+      "PNG rendering requires the optional dependency '@resvg/resvg-js'. You can export as SVG instead with: vitra export <dir> --target svg"
+    );
+  }
+
+  const resvg = new ResvgClass(svg, {
     fitTo: options?.scale ? { mode: 'zoom', value: options.scale } : { mode: 'original' },
     font: {
       loadSystemFonts: true,

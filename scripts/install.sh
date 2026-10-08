@@ -67,6 +67,15 @@ fi
 
 chmod +x "$INSTALL_DIR/$BINARY_NAME"
 
+# Verify downloaded binary executes cleanly
+if ! "$INSTALL_DIR/$BINARY_NAME" --help >/dev/null 2>&1; then
+  echo "ℹ️  Native binary not compatible with system environment, falling back to portable universal bundle..."
+  if curl -fL --progress-bar -o "$TMP_FILE" "$FALLBACK_URL"; then
+    mv "$TMP_FILE" "$INSTALL_DIR/$BINARY_NAME"
+    chmod +x "$INSTALL_DIR/$BINARY_NAME"
+  fi
+fi
+
 echo ""
 echo "✓ Successfully installed $BINARY_NAME to $INSTALL_DIR/$BINARY_NAME"
 echo ""

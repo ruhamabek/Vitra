@@ -65,10 +65,30 @@ const HELP_TEXT = `
     -v, --version              Show Vitra version
 `;
 
+function getCliArgs(): string[] {
+  const raw = process.argv.slice(1);
+  if (raw.length === 0) return [];
+
+  const first = raw[0];
+  if (!first) return [];
+
+  const isScriptOrBin =
+    !first.startsWith('-') &&
+    (first.endsWith('.js') ||
+      first.endsWith('.mjs') ||
+      first.endsWith('.ts') ||
+      path.basename(first).toLowerCase().includes('vitra') ||
+      first.includes('/') ||
+      first.includes('\\'));
+
+  if (isScriptOrBin) {
+    return raw.slice(1);
+  }
+  return raw;
+}
+
 async function main() {
-  const execBase = path.basename(process.argv[0] || '').toLowerCase();
-  const isInterpreter = execBase.startsWith('node') || execBase.startsWith('bun');
-  const args = isInterpreter ? process.argv.slice(2) : process.argv.slice(1);
+  const args = getCliArgs();
   const command = args[0];
 
   if (!command || command === '--help' || command === '-h') {
