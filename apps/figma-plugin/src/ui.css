@@ -1,0 +1,364 @@
+:root {
+  --bg: #1e1e1e;
+  --card-bg: #2d2d2d;
+  --border: #3d3d3d;
+  --text: #f0f0f0;
+  --text-muted: #888888;
+  --primary: #0066ff;
+  --primary-hover: #1a75ff;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-size: 12px;
+  padding: 12px;
+  user-select: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.logo-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.badge {
+  font-size: 9px;
+  background: var(--card-bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #252525;
+  border: 1px solid var(--border);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+.status-dot.connected {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+
+.status-dot.connecting {
+  background: var(--warning);
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.field {
+  margin-bottom: 8px;
+}
+
+.field label {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.input-row {
+  display: flex;
+  gap: 6px;
+}
+
+input[type="text"] {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: monospace;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: var(--primary);
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: #383838;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+button.secondary:hover:not(:disabled) {
+  background: #454545;
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #444;
+  transition: .2s;
+  border-radius: 18px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 12px;
+  width: 12px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .2s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--success);
+}
+
+input:checked + .slider:before {
+  transform: translateX(14px);
+}
+
+.log-container {
+  height: 130px;
+  background: #141414;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #aaa;
+}
+
+.log-entry {
+  margin-bottom: 4px;
+  word-break: break-all;
+}
+
+.log-time {
+  color: #555;
+}
+
+.log-info { color: #60a5fa; }
+.log-success { color: #34d399; }
+.log-warn { color: #fbbf24; }
+.log-error { color: #f87171; }
+
+/* Sleek Branch Selector */
+.branch-select-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #181818;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+.branch-select-wrap select {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 11px;
+  padding: 6px 0;
+  outline: none;
+  cursor: pointer;
+}
+.branch-select-wrap select option {
+  background: #222;
+  color: #fff;
+}
+
+/* Version History Timeline */
+.commit-timeline {
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+.commit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #222222;
+  border: 1px solid #333333;
+  transition: all 0.15s ease;
+}
+.commit-row:hover {
+  border-color: #444444;
+  background: #262626;
+}
+.commit-row.active {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+.commit-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #555;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.commit-row.active .commit-dot {
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+}
+.commit-body {
+  flex: 1;
+  min-width: 0;
+}
+.commit-msg {
+  font-size: 11px;
+  font-weight: 500;
+  color: #eee;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.commit-meta {
+  font-size: 9px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.commit-hash {
+  font-family: monospace;
+  color: #93c5fd;
+  background: #181d28;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.btn-restore {
+  font-size: 10px;
+  padding: 3px 7px;
+  background: #333;
+  border: 1px solid #444;
+  border-radius: 4px;
+  color: #ddd;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+.btn-restore:hover {
+  background: #444;
+  color: #fff;
+  border-color: #555;
+}
+.icon-svg {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
