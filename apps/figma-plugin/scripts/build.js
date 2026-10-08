@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+import { build } from 'vite';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,14 +12,12 @@ if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir, { recursive: true });
 }
 
-// Copy ui.css to dist/ui.css
-fs.copyFileSync(
+ fs.copyFileSync(
   path.join(pluginRoot, 'src', 'ui.css'),
   path.join(distDir, 'ui.css')
 );
 
-// Copy js/ui.js to dist/js/ui.js
-const distJsDir = path.join(distDir, 'js');
+ const distJsDir = path.join(distDir, 'js');
 if (!fs.existsSync(distJsDir)) {
   fs.mkdirSync(distJsDir, { recursive: true });
 }
@@ -28,8 +26,7 @@ fs.copyFileSync(
   path.join(distJsDir, 'ui.js')
 );
 
-// Generate bundled dist/ui.html (inlines ui.css & ui.js for Figma's iframe sandbox)
-const uiHtml = fs.readFileSync(path.join(pluginRoot, 'src', 'ui.html'), 'utf-8');
+ const uiHtml = fs.readFileSync(path.join(pluginRoot, 'src', 'ui.html'), 'utf-8');
 const uiCss = fs.readFileSync(path.join(pluginRoot, 'src', 'ui.css'), 'utf-8');
 const uiJs = fs.readFileSync(path.join(pluginRoot, 'src', 'js', 'ui.js'), 'utf-8');
 const bundledHtml = uiHtml
@@ -37,17 +34,12 @@ const bundledHtml = uiHtml
   .replace('<script src="js/ui.js"></script>', `<script>\n${uiJs}\n  </script>`);
 fs.writeFileSync(path.join(distDir, 'ui.html'), bundledHtml, 'utf-8');
 
-// Copy manifest.json to dist/manifest.json (and keep root manifest.json)
-fs.copyFileSync(
+ fs.copyFileSync(
   path.join(pluginRoot, 'manifest.json'),
   path.join(distDir, 'manifest.json')
 );
 
 async function bundle() {
-  const vitePath = '/home/sapphire/Vitra/node_modules/.pnpm/vite@5.4.21_@types+node@22.20.3/node_modules/vite/index.cjs';
-  const require = createRequire(import.meta.url);
-  const { build } = require(vitePath);
-
   await build({
     build: {
       lib: {

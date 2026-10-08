@@ -1,7 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { createRequire } from 'module';
+import { build } from 'vite';
+import { Resvg } from '@resvg/resvg-js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -12,17 +13,17 @@ if (!fs.existsSync(distDir)) {
   fs.mkdirSync(distDir, { recursive: true });
 }
 
- fs.copyFileSync(
+fs.copyFileSync(
   path.join(pluginRoot, 'src', 'index.html'),
   path.join(distDir, 'index.html')
 );
 
- fs.copyFileSync(
+fs.copyFileSync(
   path.join(pluginRoot, 'src', 'style.css'),
   path.join(distDir, 'style.css')
 );
 
- const distJsDir = path.join(distDir, 'js');
+const distJsDir = path.join(distDir, 'js');
 if (!fs.existsSync(distJsDir)) {
   fs.mkdirSync(distJsDir, { recursive: true });
 }
@@ -31,14 +32,12 @@ fs.copyFileSync(
   path.join(distJsDir, 'index.js')
 );
 
- fs.copyFileSync(
+fs.copyFileSync(
   path.join(pluginRoot, 'manifest.json'),
   path.join(distDir, 'manifest.json')
 );
 
- function generateIcon() {
-  const require = createRequire(import.meta.url);
-  const { Resvg } = require('/home/sapphire/Vitra/packages/renderer/node_modules/@resvg/resvg-js');
+function generateIcon() {
   const svg = `<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="56" height="56" rx="14" fill="#0066FF"/>
     <path d="M30 11L18 29H28L26 45L38 27H28L30 11Z" fill="white" stroke="white" stroke-width="2" stroke-linejoin="round"/>
@@ -52,10 +51,6 @@ fs.copyFileSync(
 
 async function bundle() {
   generateIcon();
-
-  const vitePath = '/home/sapphire/Vitra/node_modules/.pnpm/vite@5.4.21_@types+node@22.20.3/node_modules/vite/index.cjs';
-  const require = createRequire(import.meta.url);
-  const { build } = require(vitePath);
 
   await build({
     build: {
