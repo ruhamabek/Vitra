@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build @vitra/core dependency
+        run: pnpm --filter @vitra/core build
+
       - name: Build Penpot Plugin
         run: pnpm --filter penpot-plugin build
 
