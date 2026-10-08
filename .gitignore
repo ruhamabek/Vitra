@@ -5,3 +5,19 @@ coverage/
 *.tsbuildinfo
 .DS_Store
 *.log
+objects/
+**/objects/
+apps/launch-video/*
+storyboard
+# Images
+*.png
+**/*.png
+!apps/penpot-plugin/icon.png
+
+# Vitra projects
+*.vitra/
+**/*.vitra/
+
+# Local MCP configs
+.agents/mcp_config.json
+*mcp_config*.json
