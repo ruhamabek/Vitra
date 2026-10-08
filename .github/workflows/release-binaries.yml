@@ -1,0 +1,98 @@
+name: Release Standalone Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: 'release-binaries'
+  cancel-in-progress: true
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Setup Bun (for cross-compilation)
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build workspace dependencies
+        run: pnpm --filter @vitra/core build
+
+      - name: Build and cross-compile standalone native binaries
+        run: |
+          mkdir -p binaries
+          
+          echo "Building Linux x64 binary..."
+          bun build --compile --target=bun-linux-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-linux-x64
+
+          echo "Building Linux ARM64 binary..."
+          bun build --compile --target=bun-linux-arm64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-linux-arm64
+
+          echo "Building macOS Intel x64 binary..."
+          bun build --compile --target=bun-darwin-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-darwin-x64
+
+          echo "Building macOS Apple Silicon arm64 binary..."
+          bun build --compile --target=bun-darwin-arm64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-darwin-arm64
+
+          echo "Building Windows x64 binary..."
+          bun build --compile --target=bun-windows-x64 ./packages/cli/src/bin.ts --outfile ./binaries/vitra-windows-x64.exe
+
+          echo "Building portable JS bundle..."
+          npx esbuild ./packages/cli/dist/bin.js \
+            --bundle \
+            --platform=node \
+            --target=node20 \
+            --format=esm \
+            --outfile=./binaries/vitra-standalone.mjs \
+            --banner:js='#!/usr/bin/env node' \
+            --external:@resvg/resvg-js \
+            --external:ws \
+            --sourcemap=false
+
+          ls -lh binaries/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag_name || github.ref_name }}
+          name: "Vitra CLI ${{ github.event.inputs.tag_name || github.ref_name }}"
+          draft: false
+          prerelease: false
+          files: |
+            binaries/vitra-linux-x64
+            binaries/vitra-linux-arm64
+            binaries/vitra-darwin-x64
+            binaries/vitra-darwin-arm64
+            binaries/vitra-windows-x64.exe
+            binaries/vitra-standalone.mjs
+            scripts/install.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -37,6 +37,12 @@ fs.copyFileSync(
   path.join(distDir, 'manifest.json')
 );
 
+const repoRoot = path.resolve(pluginRoot, '../..');
+const installShPath = path.join(repoRoot, 'scripts', 'install.sh');
+if (fs.existsSync(installShPath)) {
+  fs.copyFileSync(installShPath, path.join(distDir, 'install.sh'));
+}
+
 function generateIcon() {
   const svg = `<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect width="56" height="56" rx="14" fill="#0066FF"/>
