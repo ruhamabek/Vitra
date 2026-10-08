@@ -44,14 +44,14 @@ fi
 mkdir -p "$INSTALL_DIR"
 
 DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${RELEASE_NAME}"
-FALLBACK_URL="https://github.com/${REPO}/releases/latest/download/vitra-standalone.mjs"
+FALLBACK_URL="https://github.com/${REPO}/releases/latest/download/vitra"
 
 echo "⏳ Downloading Vitra CLI for ${PLATFORM}-${TARGET_ARCH}..."
 
 HTTP_CODE=$(curl -sSL -w "%{http_code}" -o "$INSTALL_DIR/$BINARY_NAME" "$DOWNLOAD_URL" || true)
 
 if [ "$HTTP_CODE" -ne 200 ] || [ ! -s "$INSTALL_DIR/$BINARY_NAME" ]; then
-  echo "ℹ️  Binary not found, falling back to portable standalone bundle..."
+  echo "ℹ️  Downloading portable universal bundle..."
   curl -fsSL -o "$INSTALL_DIR/$BINARY_NAME" "$FALLBACK_URL"
 fi
 

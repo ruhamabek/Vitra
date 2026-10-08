@@ -51,27 +51,31 @@ jobs:
           mkdir -p binaries
           bun build ./packages/cli/dist/bin.js \
             --target=node \
-            --outfile=./binaries/vitra-standalone.mjs \
+            --outfile=./binaries/vitra \
             --external=@resvg/resvg-js \
-            --external:ws \
-            --external:fsevents
+            --external=ws \
+            --external=fsevents
+
+          sed -i '1s|^|#!/usr/bin/env node\n|' ./binaries/vitra
+          chmod +x ./binaries/vitra
+          cp ./binaries/vitra ./binaries/vitra-standalone.mjs
 
       - name: Cross-compile standalone native binaries
         run: |
           echo "Building Linux x64 binary..."
-          bun build --compile --target=bun-linux-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-linux-x64
+          bun build --compile --target=bun-linux-x64 ./binaries/vitra --outfile ./binaries/vitra-linux-x64 --external=@resvg/resvg-js --external=ws --external=fsevents || true
 
           echo "Building Linux ARM64 binary..."
-          bun build --compile --target=bun-linux-arm64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-linux-arm64
+          bun build --compile --target=bun-linux-arm64 ./binaries/vitra --outfile ./binaries/vitra-linux-arm64 --external=@resvg/resvg-js --external=ws --external=fsevents || true
 
           echo "Building macOS Intel x64 binary..."
-          bun build --compile --target=bun-darwin-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-darwin-x64
+          bun build --compile --target=bun-darwin-x64 ./binaries/vitra --outfile ./binaries/vitra-darwin-x64 --external=@resvg/resvg-js --external=ws --external=fsevents || true
 
           echo "Building macOS Apple Silicon arm64 binary..."
-          bun build --compile --target=bun-darwin-arm64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-darwin-arm64
+          bun build --compile --target=bun-darwin-arm64 ./binaries/vitra --outfile ./binaries/vitra-darwin-arm64 --external=@resvg/resvg-js --external=ws --external=fsevents || true
 
           echo "Building Windows x64 binary..."
-          bun build --compile --target=bun-windows-x64 ./binaries/vitra-standalone.mjs --outfile ./binaries/vitra-windows-x64.exe
+          bun build --compile --target=bun-windows-x64 ./binaries/vitra --outfile ./binaries/vitra-windows-x64.exe --external=@resvg/resvg-js --external=ws --external=fsevents || true
 
           ls -lh binaries/
 
@@ -83,12 +87,13 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            binaries/vitra-linux-x64
-            binaries/vitra-linux-arm64
-            binaries/vitra-darwin-x64
-            binaries/vitra-darwin-arm64
-            binaries/vitra-windows-x64.exe
+            binaries/vitra
             binaries/vitra-standalone.mjs
+            binaries/vitra-linux-x64*
+            binaries/vitra-linux-arm64*
+            binaries/vitra-darwin-x64*
+            binaries/vitra-darwin-arm64*
+            binaries/vitra-windows-x64.exe*
             scripts/install.sh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
