@@ -1,0 +1,14 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/layout" },
+    { "path": "./packages/tokens" },
+    { "path": "./packages/renderer" },
+    { "path": "./packages/sync" },
+    { "path": "./packages/eval" },
+    { "path": "./packages/codegen" },
+    { "path": "./packages/mcp-server" },
+    { "path": "./apps/canvas-web" }
+  ]
+}
