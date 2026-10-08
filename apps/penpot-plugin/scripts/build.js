@@ -42,6 +42,10 @@ const installShPath = path.join(repoRoot, 'scripts', 'install.sh');
 if (fs.existsSync(installShPath)) {
   fs.copyFileSync(installShPath, path.join(distDir, 'install.sh'));
 }
+const installPs1Path = path.join(repoRoot, 'scripts', 'install.ps1');
+if (fs.existsSync(installPs1Path)) {
+  fs.copyFileSync(installPs1Path, path.join(distDir, 'install.ps1'));
+}
 
 function generateIcon() {
   const svg = `<svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">

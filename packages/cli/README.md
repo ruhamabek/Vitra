@@ -10,11 +10,14 @@
 
 ## Installation & Quick Start
 
-### One-Line Install (macOS & Linux)
-Install the standalone binary with a single command — no npm or Node required:
-
+### macOS & Linux (curl)
 ```bash
 curl -fsSL https://ruhamabek.github.io/Vitra/install.sh | bash
+```
+
+### Windows (PowerShell)
+```powershell
+irm https://ruhamabek.github.io/Vitra/install.ps1 | iex
 ```
 
 Once installed, the `vitra` command is immediately available:
