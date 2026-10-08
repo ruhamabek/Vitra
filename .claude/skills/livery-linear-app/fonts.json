@@ -1,0 +1,25 @@
+[
+  {
+    "family": "Inter",
+    "roles": [
+      "body",
+      "display"
+    ],
+    "licence": "free",
+    "licenceName": "SIL Open Font License (Google Fonts)",
+    "install": "next/font/google (Inter) or npm i @fontsource-variable/inter",
+    "alternative": null,
+    "note": "Install from Google Fonts or Fontsource, never from the source site."
+  },
+  {
+    "family": "Berkeley Mono",
+    "roles": [
+      "mono"
+    ],
+    "licence": "licence_required",
+    "licenceName": "Commercial (US Graphics)",
+    "install": null,
+    "alternative": "JetBrains Mono",
+    "note": "Use only with your own licence. Otherwise use JetBrains Mono."
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "library": null,
+  "detectedBy": "none",
+  "iconsUsed": [],
+  "style": {
+    "sizePx": 14,
+    "strokeWidth": 1,
+    "linecap": "butt",
+    "filled": true,
+    "grid": "0 0 16 16",
+    "colour": "currentColor"
+  },
+  "customIcons": {
+    "count": 24,
+    "licence": "style_only",
+    "guidance": "Recreate the drawing style with the library above; never copy the SVGs."
+  }
+}
