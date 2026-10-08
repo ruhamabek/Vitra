@@ -49,16 +49,12 @@ jobs:
       - name: Bundle standalone executable (inlining workspace packages)
         run: |
           mkdir -p binaries
-          npx esbuild ./packages/cli/dist/bin.js \
-            --bundle \
-            --platform=node \
-            --target=node20 \
-            --format=esm \
+          bun build ./packages/cli/dist/bin.js \
+            --target=node \
             --outfile=./binaries/vitra-standalone.mjs \
-            --banner:js='#!/usr/bin/env node' \
-            --external:@resvg/resvg-js \
+            --external=@resvg/resvg-js \
             --external:ws \
-            --sourcemap=false
+            --external:fsevents
 
       - name: Cross-compile standalone native binaries
         run: |
