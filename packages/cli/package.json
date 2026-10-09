@@ -25,6 +25,7 @@
     "@vitra/renderer": "workspace:*",
     "@vitra/codegen": "workspace:*",
     "@vitra/eval": "workspace:*",
-    "@vitra/sync": "workspace:*"
+    "@vitra/sync": "workspace:*",
+    "@vitra/mcp-server": "workspace:*"
   }
 }
