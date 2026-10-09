@@ -1,0 +1,594 @@
+@import "@farming-labs/theme/threadline/css";
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Vitra Brand & Syntax Tokens */
+  --color-vitra-cyan: var(--vitra-cyan);
+  --color-vitra-blue: var(--vitra-blue);
+  --color-code-keyword: var(--code-keyword);
+  --color-code-string: var(--code-string);
+  --color-code-type: var(--code-type);
+  --color-code-number: var(--code-number);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.75rem;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Premium High-Contrast Light Mode */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0891b2;
+  --primary-foreground: #ffffff;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0891b2;
+
+  /* Vitra Brand Tokens (Light) */
+  --vitra-cyan: #0891b2;
+  --vitra-blue: #2563eb;
+  --code-keyword: #f472b6;
+  --code-string: #34d399;
+  --code-type: #60a5fa;
+  --code-number: #f59e0b;
+}
+
+.dark, :is(html.dark, body.dark), [data-theme="dark"] {
+  --radius: 0.75rem;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Linear Dark Baseline */
+  --background: #08090a;
+  --foreground: #f7f8f8;
+  --card: #0f1011;
+  --card-foreground: #f7f8f8;
+  --popover: #0f1011;
+  --popover-foreground: #f7f8f8;
+  --primary: #00f0ff;
+  --primary-foreground: #08090a;
+  --secondary: #121315;
+  --secondary-foreground: #d0d6e0;
+  --muted: #161718;
+  --muted-foreground: #8a8f98;
+  --accent: #161718;
+  --accent-foreground: #f7f8f8;
+  --destructive: #ef4444;
+  --border: #1c1d1e;
+  --input: #1c1d1e;
+  --ring: #00f0ff;
+
+  /* Vitra Brand Tokens (Dark) */
+  --vitra-cyan: #00f0ff;
+  --vitra-blue: #2563eb;
+  --code-keyword: #f472b6;
+  --code-string: #34d399;
+  --code-type: #60a5fa;
+  --code-number: #f59e0b;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    overflow-x: hidden;
+  }
+}
+
+/* Linear-style Card Border & Specular Rim */
+.linear-card {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), inset 0 0 0 0.5px rgba(255, 255, 255, 0.07);
+}
+
+/* Linear-style Subtle Radial Ambient Glow */
+.hero-glow {
+  background: radial-gradient(circle 600px at 50% -10%, rgba(0, 240, 255, 0.08), rgba(37, 99, 235, 0.03) 40%, transparent 80%);
+}
+
+/* ========================================================
+   Sidebar & Tabs Active Highlighting (Vitra Theme Integration)
+   ======================================================== */
+
+/* Sidebar Active Navigation Highlight - Dark Mode */
+.dark aside#nd-sidebar a[data-active="true"],
+.dark aside#nd-sidebar a[aria-current="page"],
+.dark aside#nd-sidebar-mobile a[data-active="true"],
+.dark aside#nd-sidebar-mobile a[aria-current="page"],
+.dark .fd-sidebar a[data-active="true"],
+.dark .fd-sidebar a[aria-current="page"],
+.dark [data-fd-framework] .fd-sidebar-link[data-active="true"],
+.dark [data-fd-framework] .fd-sidebar-link-active {
+  background: rgba(0, 240, 255, 0.09) !important;
+  color: #00f0ff !important;
+  font-weight: 600 !important;
+  border-left: 2.5px solid #00f0ff !important;
+  border-radius: 0 6px 6px 0 !important;
+  box-shadow: inset 0 0 16px rgba(0, 240, 255, 0.04) !important;
+}
+
+.dark aside#nd-sidebar a[data-active="true"] svg,
+.dark aside#nd-sidebar a[aria-current="page"] svg,
+.dark .fd-sidebar a[data-active="true"] svg,
+.dark .fd-sidebar a[aria-current="page"] svg,
+.dark [data-fd-framework] .fd-sidebar-link[data-active="true"] svg,
+.dark [data-fd-framework] .fd-sidebar-link-active svg {
+  color: #00f0ff !important;
+}
+
+/* Sidebar Active Navigation Highlight - Light Mode defined below with high specificity */
+
+/* Content & Code Tabs Active Highlight - Dark Mode */
+.dark .fd-tabs-trigger[data-state="active"],
+.dark .fd-tab-trigger[data-state="active"],
+.dark .fd-tab-trigger.fd-tab-active,
+.dark [role="tab"][aria-selected="true"],
+.dark [role="tab"][data-active="true"],
+.dark #nd-docs-layout[data-fd-framework] .fd-page-body .fd-tab-trigger.fd-tab-active,
+.dark #nd-docs-layout[data-fd-framework] .fd-page-body .fd-tab-trigger[data-state="active"] {
+  background: #121315 !important;
+  color: #00f0ff !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 0 0 1px rgba(0, 240, 255, 0.25) !important;
+}
+
+/* Content & Code Tabs Active Highlight - Light Mode */
+.fd-tabs-trigger[data-state="active"],
+.fd-tab-trigger[data-state="active"],
+.fd-tab-trigger.fd-tab-active,
+[role="tab"][aria-selected="true"],
+[role="tab"][data-active="true"],
+#nd-docs-layout[data-fd-framework] .fd-page-body .fd-tab-trigger.fd-tab-active,
+#nd-docs-layout[data-fd-framework] .fd-page-body .fd-tab-trigger[data-state="active"] {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), inset 0 0 0 1px #cbd5e1 !important;
+}
+
+/* ========================================================
+   Light Mode Structural Polish (Linear / Stripe Quality)
+   ======================================================== */
+
+/* Sidebar Background & Dividing Border in Light Mode */
+:root:not(.dark) aside#nd-sidebar,
+html:not(.dark) aside#nd-sidebar {
+  background: #f8fafc !important;
+  border-right: 1px solid #e2e8f0 !important;
+  position: relative;
+}
+
+/* Extend sidebar container background seamlessly to the left viewport edge */
+:root:not(.dark) aside#nd-sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 100%;
+  width: 100vw;
+  background: #f8fafc !important;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  :root:not(.dark) body,
+  html:not(.dark) body {
+    background: linear-gradient(
+      to right,
+      #f8fafc 0%,
+      #f8fafc calc(var(--fd-threadline-frame-gutter, 0px) + var(--fd-sidebar-width, 260px)),
+      #ffffff calc(var(--fd-threadline-frame-gutter, 0px) + var(--fd-sidebar-width, 260px)),
+      #ffffff 100%
+    ) !important;
+  }
+}
+
+:root:not(.dark) #nd-docs-layout {
+  background: transparent !important;
+}
+
+:root:not(.dark) #nd-page {
+  background: #ffffff !important;
+}
+
+/* Search Button & Kbd Shortcut in Light Mode */
+:root:not(.dark) aside#nd-sidebar button:has(kbd) {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  color: #64748b !important;
+}
+:root:not(.dark) aside#nd-sidebar button:has(kbd):hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+:root:not(.dark) aside#nd-sidebar button:has(kbd) kbd {
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
+}
+
+/* Documentation Dropdown Button in Light Mode */
+:root:not(.dark) aside#nd-sidebar button:has(svg:first-child) {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  color: #0f172a !important;
+  font-weight: 500 !important;
+}
+:root:not(.dark) aside#nd-sidebar button:has(svg:first-child):hover {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+/* Inactive Sidebar Links in Light Mode */
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):not([data-sidebar-control]):not([data-theme-toggle]):not([data-active="true"]):not([aria-current="page"]):not(.fd-sidebar-link-active) {
+  color: #64748b !important;
+  background: transparent !important;
+  border: none !important;
+}
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):not([data-sidebar-control]):not([data-theme-toggle]):not([data-active="true"]):not([aria-current="page"]):not(.fd-sidebar-link-active):hover {
+  background: rgba(15, 23, 42, 0.04) !important;
+  color: #0f172a !important;
+  border-radius: 6px !important;
+  border: none !important;
+}
+
+/* ========================================================
+   Active Sidebar Navigation Highlight - Light Mode
+   (Highlight the single active item block cleanly)
+   ======================================================== */
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):is([data-active="true"], [aria-current="page"], .fd-sidebar-link-active),
+:root:not(.dark) [data-fd-framework] .fd-sidebar-link[data-active="true"],
+:root:not(.dark) [data-fd-framework] .fd-sidebar-link-active {
+  background: #e0f2fe !important;
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):is([data-active="true"], [aria-current="page"], .fd-sidebar-link-active):hover,
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):is([data-active="true"], [aria-current="page"], .fd-sidebar-link-active):focus,
+:root:not(.dark) [data-fd-framework] .fd-sidebar-link[data-active="true"]:hover,
+:root:not(.dark) [data-fd-framework] .fd-sidebar-link-active:hover {
+  background: #bae6fd !important;
+  color: #0284c7 !important;
+}
+
+/* Ensure text labels and children inside active item are colored brand blue */
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):is([data-active="true"], [aria-current="page"], .fd-sidebar-link-active) * {
+  color: #0284c7 !important;
+}
+
+/* High-visibility active icon */
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) :is(a, button):is([data-active="true"], [aria-current="page"], .fd-sidebar-link-active) svg {
+  color: #0284c7 !important;
+  opacity: 1 !important;
+  stroke-width: 2.25px !important;
+  filter: none !important;
+}
+
+/* Prose Typography in Light Mode */
+:root:not(.dark) .prose {
+  color: #334155 !important;
+}
+:root:not(.dark) .prose h1,
+:root:not(.dark) .prose h2,
+:root:not(.dark) .prose h3,
+:root:not(.dark) .prose h4 {
+  color: #0f172a !important;
+  letter-spacing: -0.02em;
+}
+:root:not(.dark) .prose strong {
+  color: #0f172a !important;
+}
+:root:not(.dark) .prose a {
+  color: #0284c7 !important;
+  font-weight: 500;
+  text-decoration: none;
+}
+:root:not(.dark) .prose a:hover {
+  text-decoration: underline;
+}
+
+/* Clean Neutral Inline Code Badges in Light Mode (`SceneNode`, `DOCUMENT`, etc.) */
+:root:not(.dark) :not(pre) > code {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.375rem !important;
+  font-size: 0.8125rem !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 500 !important;
+}
+
+/* Dark Mode Inline Code Badges */
+.dark :not(pre) > code {
+  background: #141517 !important;
+  color: #f7f8f8 !important;
+  border: 1px solid #1c1d1e !important;
+  padding: 0.125rem 0.375rem !important;
+  border-radius: 0.375rem !important;
+  font-size: 0.8125rem !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 500 !important;
+}
+
+/* ========================================================
+   Clean, Readable Code Blocks in Light Mode
+   ======================================================== */
+
+:root:not(.dark) .fd-codeblock,
+:root:not(.dark) figure.shiki,
+:root:not(.dark) [data-codeblock] {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+  overflow: hidden !important;
+}
+
+:root:not(.dark) .fd-codeblock pre,
+:root:not(.dark) .fd-codeblock pre.shiki {
+  background: #f8fafc !important;
+  background-color: #f8fafc !important;
+  color: #1e293b !important;
+}
+
+:root:not(.dark) .fd-codeblock-title,
+:root:not(.dark) figcaption {
+  background: #f1f5f9 !important;
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-weight: 500 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.8125rem !important;
+  padding: 0.5rem 1rem !important;
+}
+
+:root:not(.dark) .fd-copy-btn {
+  color: #64748b !important;
+}
+:root:not(.dark) .fd-copy-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Dark Mode Code Blocks */
+.dark .fd-codeblock,
+.dark figure.shiki,
+.dark [data-codeblock] {
+  background: #0f1011 !important;
+  background-color: #0f1011 !important;
+  border: 1px solid #1c1d1e !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2), inset 0 0 0 0.5px rgba(255, 255, 255, 0.07) !important;
+  overflow: hidden !important;
+}
+
+.dark .fd-codeblock pre,
+.dark .fd-codeblock pre.shiki {
+  background: #0f1011 !important;
+  background-color: #0f1011 !important;
+  color: #f7f8f8 !important;
+}
+
+.dark .fd-codeblock-title,
+.dark figcaption {
+  background: #141517 !important;
+  background-color: #141517 !important;
+  color: #8a8f98 !important;
+  border-bottom: 1px solid #1c1d1e !important;
+  font-weight: 500 !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.8125rem !important;
+  padding: 0.5rem 1rem !important;
+}
+
+/* Light Mode Cards */
+:root:not(.dark) .linear-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+/* Light Mode TOC (On this page) */
+:root:not(.dark) #nd-toc a {
+  color: #64748b !important;
+}
+:root:not(.dark) #nd-toc a:hover {
+  color: #0f172a !important;
+}
+:root:not(.dark) #nd-toc a[data-active="true"] {
+  color: #0284c7 !important;
+  font-weight: 600 !important;
+}
+
+/* Light Mode Bottom Navigation & Theme Toggle */
+:root:not(.dark) div:has(> button[data-theme-toggle]) {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ========================================================
+   Remove Redundant Floating Header & Fix Content Scrolling
+   ======================================================== */
+
+#nd-docs-layout > header,
+#nd-docs-layout [role="banner"],
+#nd-docs-layout .fd-header {
+  display: none !important;
+}
+
+#nd-docs-layout {
+  --docs-header-height: 0px !important;
+  --fd-header-height: 0px !important;
+}
+
+#nd-docs-layout[data-fd-framework] .fd-sidebar,
+aside#nd-sidebar {
+  top: 0 !important;
+  height: 100dvh !important;
+}
+
+#nd-page {
+  margin-top: 0 !important;
+  padding-top: 1.5rem !important;
+}
+
+/* Allow mobile drawer navigation only on small touch screens */
+@media (max-width: 767px) {
+  #nd-docs-layout .fd-header {
+    display: flex !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 40 !important;
+    min-height: 48px !important;
+    background: var(--background) !important;
+    border-bottom: 1px solid var(--border) !important;
+  }
+
+  #nd-docs-layout {
+    --docs-header-height: 48px !important;
+    --fd-header-height: 48px !important;
+  }
+
+  #nd-page {
+    margin-top: 48px !important;
+    padding-top: 1rem !important;
+  }
+}
+
+/* ========================================================
+   Sidebar Theme Switcher Polish
+   ======================================================== */
+:is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) div:has(> button[data-theme-toggle]) {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
+}
+
+:is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  padding: 3px !important;
+  border-radius: 9999px !important;
+  border: 1px solid var(--border) !important;
+  background: var(--card) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  cursor: pointer !important;
+  margin-left: auto !important;
+}
+
+:is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle]:hover {
+  border-color: var(--color-fd-accent-foreground, #94a3b8) !important;
+}
+
+:is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg {
+  width: 24px !important;
+  height: 24px !important;
+  padding: 4px !important;
+  border-radius: 9999px !important;
+  transition: all 0.15s ease !important;
+}
+
+/* Light Mode Theme Switcher Colors */
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:first-child {
+  background: #f1f5f9 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:last-child {
+  background: transparent !important;
+  color: #94a3b8 !important;
+}
+
+:root:not(.dark) :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:last-child:hover {
+  color: #0f172a !important;
+}
+
+/* Dark Mode Theme Switcher Colors */
+.dark :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] {
+  background: #0f1011 !important;
+  border-color: #1c1d1e !important;
+}
+
+.dark :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:last-child {
+  background: #1c1d1e !important;
+  color: #00f0ff !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:first-child {
+  background: transparent !important;
+  color: #64748b !important;
+}
+
+.dark :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) button[data-theme-toggle] svg:first-child:hover {
+  color: #f7f8f8 !important;
+}
+

@@ -93,4 +93,30 @@ describe('Design Tokens Engine', () => {
     expect(resolvedNode.stroke).toBe('#313244');
     expect(resolvedNode.cornerRadius).toBe(16);
   });
+
+  it('should remap literal base colors when active theme overrides matching base tokens', () => {
+    const registry = new TokenRegistry();
+    registry.registerTokens({
+      colors: {
+        bg: { $value: '#0D0E12', $type: 'color' },
+        surface: { $value: '#15171D', $type: 'color' },
+      },
+    });
+
+    registry.registerTheme('light', {
+      colors: {
+        bg: { $value: '#F9FAFB', $type: 'color' },
+        surface: { $value: '#FFFFFF', $type: 'color' },
+      },
+    });
+
+     expect(registry.resolveValue('#0D0E12')).toBe('#0D0E12');
+    expect(registry.resolveValue('#15171D')).toBe('#15171D');
+    expect(registry.resolveValue('#FF0000')).toBe('#FF0000');
+
+     registry.setTheme('light');
+    expect(registry.resolveValue('#0D0E12')).toBe('#F9FAFB');
+    expect(registry.resolveValue('#15171D')).toBe('#FFFFFF');
+     expect(registry.resolveValue('#FF0000')).toBe('#FF0000');
+  });
 });

@@ -61,8 +61,8 @@ export function auditAccessibility(
 
   function resolveColor(val?: string): string {
     if (!val) return '#000000';
-    if (val.startsWith('$') && registry) {
-      return String(registry.resolve(val));
+    if (registry) {
+      return String(registry.resolveValue(val));
     }
     return val;
   }
@@ -82,13 +82,14 @@ export function auditAccessibility(
       current = parent;
     }
 
+    const defaultBg = registry ? String(registry.resolveValue('#0F111A')) : '#0F111A';
     if (layers.length === 0) {
-      return '#0F111A';
+      return defaultBg;
     }
 
     let effective = layers[0]!;
     if (effective.a < 1) {
-      effective = compositeColor(effective, parseColor('#0F111A'));
+      effective = compositeColor(effective, parseColor(defaultBg));
     }
 
     for (let i = 1; i < layers.length; i++) {

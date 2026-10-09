@@ -11,7 +11,7 @@ export function registerTokenTools(server: McpServer, ctx: McpToolContext): void
     {
       description: 'Registers design tokens (colors, typography, spacing, radii) or a theme override.',
       inputSchema: {
-        tokens: z.record(z.unknown()).describe('The token tree in W3C format'),
+        tokens: z.record(z.string(), z.any()).describe('The token tree in W3C format'),
         theme: z.string().optional().describe('Optional theme name to register for (e.g. "light", "dark")'),
       },
     },
@@ -43,14 +43,14 @@ export function registerTokenTools(server: McpServer, ctx: McpToolContext): void
   server.registerTool(
     'set_theme',
     {
-      description: 'Switches the active theme (e.g. "dark", "light", or null for default).',
+      description: 'Switches the active theme (e.g. "dark", "light", or omit to reset to default).',
       inputSchema: {
-        theme: z.string().nullable().describe('Theme name to activate, or null to reset'),
+        theme: z.string().optional().describe('Theme name to activate, or omit to reset to default'),
       },
     },
     async (args) => {
       try {
-        tokenRegistry.setTheme(args.theme);
+        tokenRegistry.setTheme(args.theme ?? null);
         return {
           content: [
             {

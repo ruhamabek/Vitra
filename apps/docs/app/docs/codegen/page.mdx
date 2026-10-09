@@ -1,0 +1,179 @@
+---
+order: 7
+title: Code Generation & Sync Server
+description: Multi-target compilation (React/Tailwind, SwiftUI, HTML/CSS), Figma/Penpot syncing, and live visual canvas studio.
+icon: puzzle
+related:
+  - /docs/getting-started
+  - /docs/cli
+  - /docs/visual-ast
+agent:
+  task: "Export Visual AST to production code targets, synchronize with Figma/Penpot, and start live canvas."
+  outcome: "Production React/SwiftUI code, bi-directional design sync, and live WebSocket canvas server."
+  prerequisites:
+    - "Vitra project directory."
+  files:
+    - "packages/codegen/src/react-generator.ts"
+    - "packages/codegen/src/swiftui-generator.ts"
+    - "packages/sync/src/server.ts"
+---
+
+# Code Generation & Sync Server
+
+Vitra bridges design and engineering through two foundational systems:
+1. **Multi-Target Code Compiler (`@vitra/codegen`)**: Transforms the Visual AST into clean, idiomatic React + Tailwind, SwiftUI, or HTML/CSS.
+2. **Real-Time Sync Server & Live Studio (`@vitra/sync`)**: Runs an interactive canvas studio (`vitra canvas`) with human-in-the-loop conflict prevention and bi-directional Figma/Penpot sync.
+
+---
+
+## 1. Multi-Target Code Generation (`@vitra/codegen`)
+
+Unlike generic design-to-code tools that produce unmaintainable absolute positioning (`left: 142px; top: 88px;`), Vitra's compiler leverages layout mathematics to generate idiomatic, responsive code.
+
+### Export Command
+```bash title="terminal"
+# Compile project to React + Tailwind CSS
+vitra export ./my-design.vitra --target react --out ./src/components
+
+# Compile project to native iOS SwiftUI
+vitra export ./my-design.vitra --target swiftui --out ./ios/Views
+
+# Compile project to HTML5 & CSS
+vitra export ./my-design.vitra --target html --out ./dist
+
+# Compile project to pure vector SVG or raster PNG
+vitra export ./my-design.vitra --target svg --out ./assets
+vitra export ./my-design.vitra --target png --out ./assets
+```
+
+### React + Tailwind CSS Mapping
+Auto-layout flex containers and typography nodes translate cleanly to Tailwind utility classes:
+
+```tsx title="Generated React Component (ProfileCard.tsx)"
+export function ProfileCard() {
+  return (
+    <div className="flex flex-col w-[360px] p-6 gap-4 bg-white rounded-xl border border-slate-200">
+      <div className="flex flex-row items-center w-full gap-3">
+        <div className="w-12 h-12 rounded-full bg-blue-500 shrink-0" />
+        <div className="flex flex-col flex-1 gap-1">
+          <span className="text-base font-semibold text-slate-900">Sarah Connor</span>
+          <span className="text-sm font-normal text-slate-500">Principal Systems Engineer</span>
+        </div>
+      </div>
+      <p className="text-sm font-normal text-slate-700 max-w-[312px]">
+        Leading autonomous agent infrastructure & visual compilers.
+      </p>
+      <div className="flex flex-row items-center justify-between w-full">
+        <button className="flex flex-row items-center px-4 py-2 bg-slate-900 rounded-md text-sm font-medium text-white">
+          Connect
+        </button>
+        <svg className="w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+```
+
+### SwiftUI Mapping
+The compiler translates layout direction and alignment into native SwiftUI stacks:
+- `direction: "vertical"` → `VStack(alignment: .leading, spacing: 16)`
+- `direction: "horizontal"` → `HStack(alignment: .center, spacing: 12)`
+- `sizingHorizontal: "fill"` → `.frame(maxWidth: .infinity)`
+- `fill: "#3b82f6"` → `.background(Color(hex: "#3b82f6"))`
+- `cornerRadius: 12` → `.cornerRadius(12)`
+
+---
+
+## 2. Real-Time Sync & Live Studio (`@vitra/sync`)
+
+### `vitra canvas`: The Prisma Studio for Design
+
+In the database world, developers use **Prisma Studio** (`npx prisma studio`) to launch an instant local web dashboard for inspecting, editing, and verifying database models.
+
+**`vitra canvas`** brings the exact same developer workflow to user interface design:
+
+```bash title="terminal"
+# Start sync server & open interactive canvas in browser
+vitra canvas ./my-design.vitra --port 9876
+```
+
+Output:
+```text
+✓ Vitra Sync Server listening on http://localhost:9876
+✓ WebSocket endpoint active at ws://localhost:9876
+Opening interactive visual studio in browser...
+```
+
+The browser UI provides:
+- Live panning, zooming, and artboard inspection.
+- Visual inspection of node boundaries, padding, and gaps.
+- Real-time Git commit DAG timeline and branch switcher.
+- Direct visual manipulation of colors, typography, and layout.
+
+### Human-in-the-Loop Edit Tracking (`UserEditRecord`)
+When human designers adjust nodes on the interactive canvas, `@vitra/sync` records their changes as `UserEditRecord` entries:
+
+```typescript
+interface UserEditRecord {
+  id: string;
+  timestamp: number;
+  nodeId: string;
+  eventType: 'NODE_UPDATED' | 'NODE_MOVED' | 'NODE_DELETED';
+  details: string;
+  event: SceneEvent;
+}
+```
+
+When an autonomous AI agent queries the project or calls the MCP tool `get_user_edits`, Vitra provides this record. The agent is explicitly instructed **never to overwrite human visual edits**, guaranteeing safe human-agent pair programming.
+
+---
+
+## 3. Bi-Directional Figma & Penpot Sync
+
+Vitra prevents vendor lock-in with first-class bi-directional synchronization for Figma and Penpot:
+
+```text
+               +--------------------------------------+
+               |             Vitra AST                |
+               +--------------------------------------+
+                 /           |          |          \
+      vitra     /      vitra |          | vitra     \ vitra
+      import   /     export- |          | export-    \ import
+              v       figma  v          v penpot      v
+      +--------------+    +--------------+    +--------------+
+      |  Figma REST  |    |  Figma REST  |    | Penpot Open  |
+      |   API URL    |    |   JSON File  |    |  JSON File   |
+      +--------------+    +--------------+    +--------------+
+```
+
+### Importing Existing Designs into Vitra
+You can import live Figma files via personal access token or local Penpot files:
+
+```bash title="terminal"
+# Ingest live Figma file via REST API
+vitra import https://www.figma.com/file/xyz123/MyFile --token figd_xxx --out ./my-design.vitra
+
+# Ingest exported Figma JSON dump
+vitra import ./figma-dump.json --out ./my-design.vitra
+
+# Ingest exported Penpot JSON file
+vitra import ./penpot-export.json --out ./my-design.vitra
+```
+
+### Exporting Vitra Projects to Figma & Penpot
+```bash title="terminal"
+# Export .vitra project into Figma REST API JSON
+vitra export-figma ./my-design.vitra --out ./figma-export.json
+
+# Export .vitra project into Penpot format
+vitra export-penpot ./my-design.vitra --out ./penpot-export.json
+```
+
+---
+
+## Next Steps
+
+- [Complete CLI Reference (All 24 Commands)](/docs/cli)
+- [Model Context Protocol & Agent Skills](/docs/mcp)

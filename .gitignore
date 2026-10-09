@@ -1,4 +1,5 @@
 node_modules/
+.pnpm-store/
 dist/
 coverage/
 .turbo/
@@ -13,6 +14,8 @@ storyboard
 *.png
 **/*.png
 !apps/penpot-plugin/icon.png
+!assets/**
+!apps/docs/public/**
 
 # Vitra projects
 *.vitra/
@@ -20,4 +23,5 @@ storyboard
 
 # Local MCP configs
 .agents/mcp_config.json
+apps/docs/.next
 *mcp_config*.json

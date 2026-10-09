@@ -1,0 +1,316 @@
+---
+order: 9
+title: Model Context Protocol (MCP) & Skills
+description: Complete specification of all 20 Vitra MCP tools, schemas, and skills.sh agent integration.
+icon: settings
+related:
+  - /docs/agent-setup
+  - /docs/cli
+  - /docs/visual-ast
+agent:
+  task: "Call Vitra MCP tools and configure skills.sh integration for autonomous agents."
+  outcome: "20 MCP tools integrated via JSON-RPC protocol with complete parameter validation."
+  prerequisites:
+    - "Vitra MCP server or skills.sh client."
+---
+
+# Model Context Protocol (MCP) & Skills
+
+Vitra implements Anthropic's **Model Context Protocol (MCP)**, providing autonomous AI agents (Claude Desktop, Cursor, Antigravity) with a typed JSON-RPC interface to manipulate the Visual AST, execute layout math, trigger audits, render images, and record Git commits.
+
+Additionally, Vitra ships with a ready-to-run Agent Skill published at **[https://skills.sh/vitra](https://skills.sh/vitra)**.
+
+---
+
+## 1. How Vitra MCP Works (No Hosting Required)
+
+> [!NOTE]
+> **You do not need to host the MCP server on a remote server or cloud.**  
+> The Vitra MCP server runs locally as a child process using **`stdio` (Standard Input / Output)**. When your AI harness (Claude Desktop, Cursor, Antigravity) boots, it spawns the server process on your local machine. It communicates via JSON-RPC, has zero latency, incurs zero hosting costs, and keeps all your design files private on your own disk.
+
+```text
++-----------------------+                         +----------------------------+
+|  AI Client / Harness  |      stdin (JSON-RPC)   |      Vitra MCP Server      |
+|  • Claude Desktop     | ----------------------> |  (Local Node.js process)   |
+|  • Cursor             | <---------------------- |                            |
+|  • Antigravity        |      stdout (JSON-RPC)  |  • Reads local .vitra/     |
++-----------------------+                         |  • Runs Yoga layout math   |
+                                                  |  • Renders SVG / PNG       |
+                                                  +----------------------------+
+                                                                |
+                                                                v
+                                                  WebSocket (ws://localhost:9876)
+                                                                |
+                                                  +----------------------------+
+                                                  |   vitra canvas (Browser)   |
+                                                  +----------------------------+
+```
+
+---
+
+## 2. Client Setup Guide
+
+### Option A: Claude Desktop
+
+Add the server configuration to your `claude_desktop_config.json` file:
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json title="claude_desktop_config.json"
+{
+  "mcpServers": {
+    "vitra": {
+      "command": "vitra",
+      "args": ["mcp", "./my-design.vitra"]
+    }
+  }
+}
+```
+
+> If you installed the Vitra CLI via `curl` or building from source, `vitra` is available globally in your PATH. No repository cloning or file path lookups required!
+
+Restart Claude Desktop, and you will see the hammer icon with 20 Vitra tools available.
+
+### Option B: Cursor (MCP Settings or `.cursor/mcp.json`)
+
+You can configure Vitra in Cursor with a single line:
+
+**Via Project Config (`.cursor/mcp.json`):**
+Create `.cursor/mcp.json` in your workspace root:
+```json title=".cursor/mcp.json"
+{
+  "mcpServers": {
+    "vitra": {
+      "command": "vitra",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+**Via Settings UI:**
+1. Open Cursor Settings → **Features** → **MCP**.
+2. Click **+ Add New MCP Server**.
+3. Name: `vitra`.
+4. Type: `command`.
+5. Command: `vitra mcp`.
+
+### Option C: Antigravity & Skills.sh
+
+If using Antigravity, you can use the official Vitra Skill via [skills.sh](https://skills.sh/vitra):
+```bash title="terminal"
+# Install the skill directly into your project
+npx skills add vitra
+```
+Or reference the in-repo skill at `.agents/skills/vitra/SKILL.md`.
+
+---
+
+## 3. Environment Variables Reference
+
+| Variable | Description | Default |
+| :--- | :--- | :--- |
+| **`VITRA_PROJECT_PATH`** | Target `.vitra` project directory containing `scene/`, `tokens/`, and `.history/` | `./my-design.vitra` |
+| **`VITRA_SYNC_PORT`** | Port for the local WebSocket sync hub that mirrors canvas edits in real-time | `9876` |
+
+---
+
+## 4. Testing Your MCP Server (MCP Inspector)
+
+You can test and verify all 20 tools interactively without opening Claude or Cursor using the official Anthropic MCP Inspector:
+
+```bash title="terminal"
+npx @modelcontextprotocol/inspector node packages/mcp-server/dist/cli.js
+```
+
+This launches a local web UI where you can inspect tool schemas, send test JSON-RPC payloads, and verify responses.
+
+---
+
+## 5. The 20 MCP Tools Reference
+
+The Vitra MCP server exposes 20 tools partitioned into 6 functional domains:
+
+```text
++-----------------------------------------------------------------------------------------+
+|                                   Vitra MCP Server (20 Tools)                            |
++-------------------+--------------------+--------------------+---------------------------+
+| Canvas Tools      | Primitive Tools    | Token Tools        | Evaluation & Code Tools   |
+| • spawn_artboard  | • create_frame     | • register_tokens  | • audit_design            |
+| • render_viewport | • create_text      | • set_theme        | • export_code             |
+|                   | • create_icon      |                    | • get_user_edits          |
+|                   | • create_shape     | Project Tools      +---------------------------+
+|                   | • insert_component | • save_project     | • commit_version          |
+|                   | • update_node      | • load_project     | • get_history             |
+|                   | • delete_node      | • diff_projects    |                           |
+|                   | • move_node        |                    |                           |
++-------------------+--------------------+--------------------+---------------------------+
+```
+
+---
+
+### Canvas Tools
+
+#### `spawn_artboard`
+Spawns a responsive viewport artboard on the infinite canvas.
+- **Arguments**:
+  - `id` *(string, required)*: Unique identifier (e.g. `"board-desktop"`).
+  - `name` *(string, optional)*: Human-readable name.
+  - `preset` *("desktop" | "mobile" | "tablet" | "custom")*: Viewport dimensions preset.
+  - `stateLabel` *(string, optional)*: State description (e.g. `"Mobile (375px)"`).
+  - `width` *(number, optional)*: Custom width.
+  - `height` *(number, optional)*: Custom height.
+  - `x` *(number, optional)*: Custom X offset. If omitted, places 80px to the right of existing artboards.
+  - `y` *(number, optional)*: Custom Y offset.
+  - `fill` *(string, optional)*: Background color hex.
+
+#### `render_viewport`
+Headless rasterization of canvas to PNG base64 and layout bounds for multimodal vision inspection.
+- **Arguments**:
+  - `artboardId` *(string, required)*: Artboard to render.
+  - `scale` *(number, optional)*: Scale factor (1, 2, or 3). Default is 1.
+  - `format` *("png" | "svg", optional)*: Output format. Default is "png".
+- **Returns**: Base64 image data, calculated node bounds, and accessibility status.
+
+---
+
+### Visual Primitive Tools
+
+#### `create_frame`
+Constructs an auto-layout flex container.
+- **Arguments**:
+  - `id` *(string, required)*: Node identifier.
+  - `parentId` *(string, required)*: Parent artboard or frame ID.
+  - `name` *(string, optional)*: Display name.
+  - `width`, `height` *(number, optional)*: Pixel dimensions.
+  - `layout` *(object, optional)*: `{ direction, gap, padding, alignItems, justifyContent }`.
+  - `fill`, `stroke` *(string, optional)*: Colors or token aliases.
+  - `strokeWidth`, `cornerRadius` *(number, optional)*: Border and radius.
+  - `sizingHorizontal`, `sizingVertical` *("fixed" | "hug" | "fill")*: Layout sizing model.
+
+#### `create_text`
+Creates a typographic element with font size, weight, and wrapping bounds.
+- **Arguments**:
+  - `id` *(string, required)*: Node identifier.
+  - `parentId` *(string, required)*: Target container.
+  - `text` *(string, required)*: Textual content.
+  - `fontSize` *(number, optional)*: Default is 16.
+  - `fontWeight` *(number, optional)*: 400, 500, 600, 700.
+  - `fill` *(string, optional)*: Text color.
+  - `wrap` *(boolean, optional)*: Enable multi-line text wrapping.
+  - `maxWidth` *(number, optional)*: Width limit for line breaking.
+
+#### `create_icon`
+Instantiates a crisp vector icon from the Lucide library.
+- **Arguments**:
+  - `id` *(string, required)*: Node identifier.
+  - `parentId` *(string, required)*: Target container.
+  - `icon` *(string, required)*: Lucide icon name (e.g. `"search"`, `"bell"`, `"heart"`).
+  - `size` *(number, optional)*: Icon dimension in pixels (default: 20).
+  - `color` *(string, optional)*: Stroke color.
+
+#### `create_shape`
+Creates a geometric vector primitive or divider.
+- **Arguments**:
+  - `id` *(string, required)*: Node identifier.
+  - `parentId` *(string, required)*: Target container.
+  - `shapeType` *("rectangle" | "ellipse" | "divider")*: Shape type.
+  - `width`, `height` *(number, optional)*: Dimensions.
+  - `fill`, `stroke` *(string, optional)*: Colors.
+
+#### `insert_component`
+Mounts an entire subtree of declarative nodes in one atomic operation.
+- **Arguments**:
+  - `componentTree` *(object, required)*: Declarative JSON tree.
+  - `parentId` *(string, required)*: Target parent node ID.
+
+#### `update_node`
+Mutates visual or layout properties of an existing node.
+- **Arguments**:
+  - `id` *(string, required)*: Target node ID.
+  - `updates` *(object, required)*: Partial node properties to merge.
+
+#### `delete_node`
+Removes a node and all of its descendants from the scene graph.
+- **Arguments**:
+  - `id` *(string, required)*: Target node ID.
+
+#### `move_node`
+Reparents or reorders a node in the scene tree.
+- **Arguments**:
+  - `id` *(string, required)*: Target node ID.
+  - `newParentId` *(string, required)*: Target container ID.
+  - `index` *(number, optional)*: Target child position.
+
+---
+
+### Design Token Tools
+
+#### `register_tokens`
+Ingests or updates W3C DTCG design tokens.
+- **Arguments**:
+  - `tokens` *(object, required)*: W3C DTCG JSON tokens object.
+
+#### `set_theme`
+Swaps the active theme collection.
+- **Arguments**:
+  - `theme` *(string, required)*: Theme identifier (e.g. `"dark"`, `"light"`, `"high-contrast"`).
+
+---
+
+### Evaluation & Human Edit Protection
+
+#### `audit_design`
+Runs headless WCAG 2.1 contrast ratio and layout overflow checks.
+- **Arguments**:
+  - `nodeId` *(string, optional)*: Node to audit (defaults to entire scene).
+  - `strict` *(boolean, optional)*: Fail if any AA/AAA violation occurs.
+- **Returns**: Contrast ratios, failing color pairs, boundary overflow alerts.
+
+#### `get_user_edits`
+Retrieves human visual edits made on the interactive browser canvas.
+- **Arguments**: None.
+- **Returns**: Array of `UserEditRecord` objects. Agents MUST check this tool to avoid overwriting human designer adjustments.
+
+---
+
+### Code Generation & Project Tools
+
+#### `export_code`
+Compiles scene nodes into production code targets.
+- **Arguments**:
+  - `nodeId` *(string, optional)*: Root node to export.
+  - `target` *("react" | "swiftui" | "html" | "svg" | "png")*: Target framework.
+
+#### `save_project` & `load_project`
+Persists or loads `.vitra` project files to and from disk.
+- **Arguments**:
+  - `path` *(string, required)*: Target directory path.
+
+#### `commit_version`
+Creates an immutable Git commit snapshot in `.history/`.
+- **Arguments**:
+  - `message` *(string, required)*: Commit message.
+  - `intent` *(string, required)*: High-level architectural intent.
+  - `rationale` *(string, optional)*: Rationale behind changes.
+  - `model` *(string, optional)*: AI model name (e.g. `"claude-3-7-sonnet"`).
+
+#### `get_history`
+Retrieves the commit DAG history log.
+- **Arguments**: None.
+- **Returns**: Chronological commit array with author, hashes, and change summaries.
+
+#### `diff_projects`
+Calculates AST-level diff between two commits or current working tree.
+- **Arguments**:
+  - `commitA` *(string, optional)*: Base commit SHA.
+  - `commitB` *(string, optional)*: Target commit SHA.
+
+---
+
+## Next Steps
+
+- [AI Agent Setup & Prompt Reference](/docs/agent-setup)
+- [Complete CLI Reference](/docs/cli)
+- [Visual AST Specification](/docs/visual-ast)

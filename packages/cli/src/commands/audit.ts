@@ -8,6 +8,7 @@ export interface AuditCliOptions {
   nodeId?: string;
   strict?: boolean;
   json?: boolean;
+  theme?: string;
 }
 
 export interface ProjectAuditSummary {
@@ -29,22 +30,34 @@ export async function runAuditCommand(
   const resolvedDir = path.resolve(process.cwd(), targetDir);
   const project = await loadVitraProject(resolvedDir);
 
-   let registry: TokenRegistry | undefined;
-  const tokensFile = path.join(resolvedDir, 'tokens.json');
-  if (fs.existsSync(tokensFile)) {
-    try {
-      const data = JSON.parse(fs.readFileSync(tokensFile, 'utf-8'));
-      registry = new TokenRegistry();
-      if (data.tokens) registry.registerTokens(data.tokens as TokenTree);
-      if (data.themes && typeof data.themes === 'object') {
-        const themes = data.themes as Record<string, TokenTree>;
-        for (const [theme, t] of Object.entries(themes)) {
-          registry.registerTheme(theme, t);
+  let registry: TokenRegistry | undefined;
+  const tokenCandidatePaths = [
+    path.join(resolvedDir, 'tokens.json'),
+    path.join(resolvedDir, 'tokens', 'tokens.json'),
+  ];
+  for (const tPath of tokenCandidatePaths) {
+    if (fs.existsSync(tPath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(tPath, 'utf-8'));
+        registry = new TokenRegistry();
+        if (data.tokens) registry.registerTokens(data.tokens as TokenTree);
+        else registry.registerTokens(data as TokenTree);
+        if (data.themes && typeof data.themes === 'object') {
+          const themes = data.themes as Record<string, TokenTree>;
+          for (const [theme, t] of Object.entries(themes)) {
+            registry.registerTheme(theme, t);
+          }
         }
+      } catch {
+        // Ignore token parse error
       }
-    } catch {
-      // Ignore token parse error
+      break;
     }
+  }
+
+  if (options.theme) {
+    if (!registry) registry = new TokenRegistry();
+    registry.setTheme(options.theme);
   }
 
   const auditOpts = {

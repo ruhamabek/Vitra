@@ -10,6 +10,7 @@ export interface RenderCliOptions {
   out?: string;
   format?: 'png' | 'svg';
   scale?: number;
+  theme?: string;
 }
 
 export interface RenderResult {
@@ -47,6 +48,30 @@ export async function runRenderCommand(
   const resolvedOut = path.resolve(process.cwd(), outFile);
 
   const registry = new TokenRegistry();
+  const tokenCandidatePaths = [
+    path.join(resolvedDir, 'tokens.json'),
+    path.join(resolvedDir, 'tokens', 'tokens.json'),
+  ];
+  for (const tPath of tokenCandidatePaths) {
+    if (fs.existsSync(tPath)) {
+      try {
+        const data = JSON.parse(fs.readFileSync(tPath, 'utf-8'));
+        if (data.tokens) registry.registerTokens(data.tokens);
+        else registry.registerTokens(data);
+        if (data.themes && typeof data.themes === 'object') {
+          for (const [theme, t] of Object.entries(data.themes)) {
+            registry.registerTheme(theme, t as any);
+          }
+        }
+      } catch {}
+      break;
+    }
+  }
+
+  if (options.theme) {
+    registry.setTheme(options.theme);
+  }
+
   const layout = await computeLayout(project.store, nodeId);
   const svg = renderToSvg(project.store, nodeId, layout, { tokenRegistry: registry });
 

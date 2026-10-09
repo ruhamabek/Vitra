@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "generatedAt": "2026-10-09T08:53:00.612Z",
+  "entry": "docs",
+  "siteTitle": "Vitra Documentation",
+  "pages": [
+    {
+      "url": "/docs",
+      "absoluteUrl": "/docs",
+      "markdownUrl": "/docs.md",
+      "title": "Overview",
+      "description": "The Universal Visual Runtime & Design Version Control Protocol.",
+      "sourcePath": "app/docs/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/getting-started",
+        "/docs/visual-ast",
+        "/docs/cli"
+      ]
+    },
+    {
+      "url": "/docs/cli",
+      "absoluteUrl": "/docs/cli",
+      "markdownUrl": "/docs/cli.md",
+      "title": "Command Line Interface (CLI)",
+      "description": "Complete reference for the unified `vitra` terminal binary.",
+      "sourcePath": "app/docs/cli/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/getting-started",
+        "/docs/eval-audit",
+        "/docs/version-control"
+      ]
+    },
+    {
+      "url": "/docs/codegen",
+      "absoluteUrl": "/docs/codegen",
+      "markdownUrl": "/docs/codegen.md",
+      "title": "Code Synthesis",
+      "description": "Compile Visual AST components directly into React, Tailwind CSS, and SwiftUI.",
+      "sourcePath": "app/docs/codegen/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/visual-ast",
+        "/docs/cli"
+      ]
+    },
+    {
+      "url": "/docs/eval-audit",
+      "absoluteUrl": "/docs/eval-audit",
+      "markdownUrl": "/docs/eval-audit.md",
+      "title": "Automated Audits",
+      "description": "Headless WCAG contrast calculation and layout overflow verification.",
+      "sourcePath": "app/docs/eval-audit/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/getting-started",
+        "/docs/cli"
+      ]
+    },
+    {
+      "url": "/docs/getting-started",
+      "absoluteUrl": "/docs/getting-started",
+      "markdownUrl": "/docs/getting-started.md",
+      "title": "Getting Started",
+      "description": "Install Vitra, initialize a new visual project, and run your first audit.",
+      "sourcePath": "app/docs/getting-started/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/cli",
+        "/docs/visual-ast",
+        "/docs/eval-audit"
+      ]
+    },
+    {
+      "url": "/docs/mcp",
+      "absoluteUrl": "/docs/mcp",
+      "markdownUrl": "/docs/mcp.md",
+      "title": "Model Context Protocol (MCP)",
+      "description": "Connect AI agents directly to the Vitra design runtime.",
+      "sourcePath": "app/docs/mcp/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/visual-ast",
+        "/docs/cli"
+      ]
+    },
+    {
+      "url": "/docs/version-control",
+      "absoluteUrl": "/docs/version-control",
+      "markdownUrl": "/docs/version-control.md",
+      "title": "Design Version Control",
+      "description": "Parallel collaboration, visual branching, and 3-way AST merge.",
+      "sourcePath": "app/docs/version-control/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/visual-ast",
+        "/docs/cli",
+        "/docs/mcp"
+      ]
+    },
+    {
+      "url": "/docs/visual-ast",
+      "absoluteUrl": "/docs/visual-ast",
+      "markdownUrl": "/docs/visual-ast.md",
+      "title": "Visual AST",
+      "description": "The formal data model representing declarative user interfaces.",
+      "sourcePath": "app/docs/visual-ast/page.mdx",
+      "lastmod": "2026-10-09",
+      "lastmodSource": "filesystem",
+      "related": [
+        "/docs/getting-started",
+        "/docs/version-control",
+        "/docs/codegen"
+      ]
+    }
+  ]
+}

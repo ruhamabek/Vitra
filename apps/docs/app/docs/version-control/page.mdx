@@ -1,0 +1,219 @@
+---
+order: 5
+title: Visual Version Control & Git Engine
+description: Content-addressable object store, SHA-1 trees, DAG commits, and 3-way visual AST reconciliation.
+icon: database
+related:
+  - /docs/getting-started
+  - /docs/visual-ast
+  - /docs/cli
+agent:
+  task: "Manage visual branches, inspect commit DAGs, and resolve 3-way AST merge conflicts."
+  outcome: "Deterministic Git history in .history with zero visual state corruption."
+  prerequisites:
+    - "Initialized .vitra repository."
+  files:
+    - ".history/HEAD"
+    - ".history/index"
+    - ".history/objects"
+---
+
+# Visual Version Control & Git Engine
+
+Traditional design tools store files as monolithic, opaque binary blobs (such as `.fig` or `.sketch`), making Git version control impossible. Teams end up with chaotic filenames like `final_v2_really_final.fig` and zero visibility into who changed what.
+
+Vitra re-engineers Git from the ground up specifically for **Visual ASTs**. Inside every Vitra repository is a true content-addressable Git store located in `.history/`.
+
+---
+
+## 1. The Git Object Model for Design
+
+Vitra's storage layer adheres to the standard Git object architecture:
+
+```text
+.history/
+├── HEAD                        # Current ref pointer ("ref: refs/heads/main")
+├── index                       # Staging index (maps node IDs to staged SHA-1 hashes)
+├── objects/                    # Content-addressable object store
+│   ├── 3b/
+│   │   └── 4f829a...           # Compressed blob (SceneNode JSON)
+│   ├── 7a/
+│   │   └── 119dc2...           # Compressed tree (Directory/Hierarchy map)
+│   └── ef/
+│       └── 8832a1...           # Compressed commit object
+└── refs/
+    └── heads/
+        ├── main                # Commit hash for main branch
+        └── feature/header      # Commit hash for feature branch
+```
+
+### Loose Object Formatting & Hashing
+
+Every object stored by Vitra starts with a standard Git header:
+
+```text
+Object Header = type + " " + payload.length + "\0"
+```
+
+The complete buffer is hashed using **SHA-1** and compressed using **zlib deflate**:
+
+```text
+Payload:        {"id":"btn-01","type":"frame",...} (142 bytes)
+Header:         "blob 142\0"
+Store Buffer:   "blob 142\0" + Payload
+SHA-1 Hash:     3b4f829ac4e6... -> stored at .history/objects/3b/4f829ac4e6...
+```
+
+Vitra provides low-level plumbing commands identical to Git:
+```bash title="terminal"
+# Compute SHA-1 hash and optionally write object to .history/objects
+vitra hash-object -w ./scene/root.json
+
+# Inspect raw object contents from hash
+vitra cat-file ./my-design.vitra -p 3b4f829a
+```
+
+---
+
+## 2. Commit Object Structure & AI Metadata
+
+Unlike standard Git commits which only store an author name and commit message, Vitra commits record **semantic intent, model telemetry, and architectural rationale**:
+
+```json title="Sample Vitra Commit Object"
+{
+  "id": "ef8832a1b9201a4f3299c82410a08e13274df221",
+  "parentId": "3b4f829ac4e62810a912bb098234ea71928312ff",
+  "parentIds": ["3b4f829ac4e62810a912bb098234ea71928312ff"],
+  "timestamp": "2026-10-09T14:22:00.000Z",
+  "author": {
+    "type": "agent",
+    "name": "Cursor Agent",
+    "model": "claude-3-7-sonnet",
+    "client": "vitra-mcp"
+  },
+  "intent": "feat(nav): convert desktop navbar to responsive flex layout",
+  "rationale": "Updated navbar items to wrap on tablet breakpoints and ensured WCAG AAA contrast.",
+  "changes": {
+    "nodesAdded": ["nav-hamburger-icon", "nav-drawer"],
+    "nodesModified": ["nav-container"],
+    "nodesDeleted": ["legacy-nav-links"],
+    "tokensModified": ["color.background.nav"]
+  },
+  "treeSha": "7a119dc29831a..."
+}
+```
+
+---
+
+## 3. The Visual Staging Index
+
+Vitra includes a dedicated staging index (`.history/index`). This allows developers and agents to stage partial changes rather than blindly committing the entire canvas:
+
+```bash title="terminal"
+# Stage specific nodes or components
+vitra add ./my-design.vitra navbar-frame
+
+# Stage all visual changes
+vitra add ./my-design.vitra .
+
+# Check staging status
+vitra status ./my-design.vitra
+
+# Unstage changes (equivalent to git reset)
+vitra reset ./my-design.vitra navbar-frame
+
+# Discard unstaged working canvas modifications
+vitra restore ./my-design.vitra navbar-frame
+```
+
+---
+
+## 4. Visual Branching & History DAG
+
+Visual branches allow designers and autonomous agents to explore interface variations concurrently without stepping on each other:
+
+```bash title="terminal"
+# List existing branches
+vitra branch ./my-design.vitra
+
+# Create and checkout a new visual branch
+vitra checkout ./my-design.vitra -b feature/dark-mode
+
+# Commit changes to active branch
+vitra commit ./my-design.vitra -m "feat: dark theme tokens"
+
+# Switch back to main branch
+vitra checkout ./my-design.vitra main
+
+# View visual commit DAG log
+vitra log ./my-design.vitra
+```
+
+---
+
+## 5. Visual Diffing
+
+Traditional `git diff` produces noisy line-by-line diffs of minified JSON. `vitra diff` performs **AST-aware semantic diffing**:
+
+```bash title="terminal"
+vitra diff ./my-design.vitra
+```
+
+Output:
+```text
+============================================================
+                     VISUAL AST DIFF                        
+============================================================
+
+~ [MODIFIED] Frame: navbar-frame
+    layout.gap: 16 -> 24
+    fill: #ffffff -> var(--color-surface)
+    cornerRadius: 0 -> 8
+
++ [ADDED] Icon: search-icon (parent: navbar-frame)
+    icon: "search"
+    size: 20
+    color: #64748b
+
+- [REMOVED] Text: legacy-badge (parent: navbar-frame)
+
+Summary: 1 Added, 1 Modified, 1 Deleted
+```
+
+---
+
+## 6. 3-Way AST Merge Reconciliation
+
+When merging branches (`vitra merge ./my-design.vitra feature/new-cards`), Vitra resolves changes using a **3-Way Visual AST Merge**:
+
+```text
+                  Base Ancestor (LCA)
+                     [Commit O]
+                     /        \
+                    /          \
+            Our Branch       Their Branch
+            [Commit A]        [Commit B]
+                    \          /
+                     \        /
+                   Merged AST
+                   [Commit M]
+```
+
+### Reconciliation Rules
+
+1. **Lowest Common Ancestor (LCA)**: Vitra runs breadth-first search across the commit graph to find the merge base.
+2. **Property-Level Merging**: If Branch A edits padding on a card while Branch B updates its background fill, Vitra cleanly merges both properties automatically.
+3. **Structural Conflict Detection**: If Branch A deletes a node that Branch B added children to, Vitra flags a visual merge conflict:
+
+```text
+CONFLICT (modify/delete): Node "profile-card" was deleted in HEAD but modified in feature/cards.
+Automatic merge failed. Run `vitra status` to inspect conflicts.
+```
+
+---
+
+## Next Steps
+
+- [Headless Rendering & Audits](/docs/eval-audit)
+- [Multi-Target Code Compilation](/docs/codegen)
+- [CLI Reference](/docs/cli)

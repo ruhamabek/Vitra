@@ -1,0 +1,303 @@
+---
+order: 4
+title: Visual AST & Layout Engine
+description: The formal scene graph data model, Zod schemas, and Yoga Flexbox WebAssembly layout engine.
+icon: code
+related:
+  - /docs/getting-started
+  - /docs/version-control
+  - /docs/eval-audit
+agent:
+  task: "Construct, validate, and compute layouts for Vitra Visual AST nodes."
+  outcome: "Valid SceneNode trees validated via Zod and evaluated through @vitra/layout."
+  prerequisites:
+    - "Import @vitra/core and @vitra/layout."
+  files:
+    - "packages/core/src/nodes.ts"
+    - "packages/layout/src/engine.ts"
+---
+
+# Visual AST & Layout Engine
+
+At the core of Vitra is the **Visual Abstract Syntax Tree (Visual AST)**: a strongly typed, deterministic data structure that models user interfaces as immutable graphs rather than mutable DOM trees or proprietary binary canvases.
+
+Together with `@vitra/layout`—a headless layout computation engine built on **Yoga Flexbox** compiled to WebAssembly—Vitra allows autonomous agents and developer tooling to calculate sub-pixel bounding boxes, measure text metrics, and resolve responsive auto-layouts without running a web browser.
+
+---
+
+## 1. Scene Graph Hierarchy
+
+Every Vitra document is organized as a strict directed acyclic graph (DAG):
+
+```text
+DocumentNode (Root)
+└── ArtboardNode (e.g. desktop 1440x900, mobile 390x844)
+    └── FrameNode (Header / Navigation bar)
+        ├── FrameNode (Brand logo container)
+        │   └── IconNode (Lucide icon)
+        ├── TextNode (Title label)
+        └── FrameNode (Action buttons)
+            └── ShapeNode (Divider)
+```
+
+Nodes maintain deterministic identifiers (`id`), parent references (`parentId`), and an ordered list of children (`childIds`).
+
+---
+
+## 2. Core Node Types & Schemas
+
+Vitra defines nodes using Zod schemas in `@vitra/core`:
+
+| Node Type | Purpose | Primary Properties | Default Sizing |
+| :--- | :--- | :--- | :--- |
+| **`document`** | Global container and root node | `childIds` | `fixed` |
+| **`artboard`** | Viewport canvas boundary | `preset`, `width`, `height`, `x`, `y`, `fill`, `layout` | `fixed` |
+| **`frame`** | Auto-layout flex container | `layout`, `fill`, `stroke`, `cornerRadius`, `effects` | `fixed` |
+| **`text`** | Typographic content node | `text`, `fontSize`, `fontWeight`, `fill`, `wrap`, `maxWidth` | `hug` |
+| **`shape`** | Geometric vector primitive | `shapeType` (`rectangle`, `ellipse`, `divider`), `fill` | `fixed` |
+| **`icon`** | Scalable Lucide vector icon | `icon`, `size`, `color`, `fill`, `strokeWidth` | `fixed` |
+
+---
+
+## 3. Node Type Specifications
+
+### FrameNode (`frame`)
+Auto-layout flex containers supporting padding, gaps, border strokes, and drop shadows:
+
+```typescript title="FrameNode Type Definition"
+interface FrameNode extends BaseNode {
+  type: 'frame';
+  childIds: string[];
+  width?: number;
+  height?: number;
+  layout?: AutoLayout;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  cornerRadius?: number;
+  effects?: Effect[];
+  sizingHorizontal: 'fixed' | 'hug' | 'fill';
+  sizingVertical: 'fixed' | 'hug' | 'fill';
+}
+```
+
+#### AutoLayout Specification
+```typescript
+interface AutoLayout {
+  direction: 'horizontal' | 'vertical'; // maps to flex-row or flex-col
+  gap: number;                          // pixels between child nodes
+  padding: {
+    top: number;
+    right: number;
+    bottom: number;
+    left: number;
+  };
+  alignItems: 'start' | 'center' | 'end' | 'stretch';
+  justifyContent: 'start' | 'center' | 'end' | 'space-between';
+}
+```
+
+### TextNode (`text`)
+Typographic elements with precise text measurement properties:
+
+```typescript title="TextNode Type Definition"
+interface TextNode extends BaseNode {
+  type: 'text';
+  text: string;
+  fontSize: number;          // Default: 16
+  fontWeight: number;        // 400 (regular), 500 (medium), 600 (semi-bold), 700 (bold)
+  fill: string;              // Hex color or design token alias
+  lineHeight?: number;       // Calculated as fontSize * 1.35 if omitted
+  wrap: boolean;             // Default: false
+  maxWidth?: number;         // Maximum width before forced line breaking
+  sizingHorizontal: 'fixed' | 'hug' | 'fill'; // Default: 'hug'
+  sizingVertical: 'fixed' | 'hug' | 'fill';   // Default: 'hug'
+}
+```
+
+### ShapeNode (`shape`)
+Geometric vectors and structural dividers:
+
+```typescript title="ShapeNode Type Definition"
+interface ShapeNode extends BaseNode {
+  type: 'shape';
+  shapeType: 'rectangle' | 'ellipse' | 'divider';
+  width: number;             // Default: 100
+  height: number;            // Default: 100
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  cornerRadius?: number;     // Applied when shapeType === 'rectangle'
+  effects?: Effect[];
+}
+```
+
+### IconNode (`icon`)
+Crisp vector icons sourced from Lucide Icons:
+
+```typescript title="IconNode Type Definition"
+interface IconNode extends BaseNode {
+  type: 'icon';
+  icon: string;              // e.g. "search", "bell", "arrow-right", "user"
+  size: number;              // Default: 20
+  color: string;             // Stroke color (Default: #FFFFFF)
+  fill: string;              // Default: "none"
+  strokeWidth: number;       // Default: 2
+}
+```
+
+---
+
+## 4. Sizing Model: Fixed, Hug, & Fill
+
+Vitra implements standard modern layout sizing behaviors across both axes:
+
+```text
++-----------------------------------------------------------------------+
+|  Fixed: Exact explicit dimension in pixels (e.g. width = 320)          |
++-----------------------------------------------------------------------+
+|  Hug:   Calculates minimum bounding box enclosing all child elements  |
+|         (flexGrow = 0, flexShrink = 0, dimension = auto)              |
++-----------------------------------------------------------------------+
+|  Fill:  Expands to consume remaining space along parent container axis|
+|         (flexGrow = 1, flexShrink = 1, dimension = 100%)              |
++-----------------------------------------------------------------------+
+```
+
+When compiling into Yoga Flexbox nodes:
+- `fill` on the main axis translates to `setFlexGrow(1)` and `setFlexShrink(1)`.
+- `hug` enables Yoga's intrinsic dimension calculation.
+- `fixed` explicitly pins the width or height via `setWidth(node.width)` / `setHeight(node.height)`.
+
+---
+
+## 5. Layout Engine (`@vitra/layout`) & Text Measurement
+
+Computing UI layouts headlessly without a browser requires exact deterministic text measurement. Vitra uses an algorithmic text measurer in `@vitra/layout` calibrated against standard system typography engines:
+
+### The Text Measurement Algorithm
+
+Given a `TextNode`, character bounding widths are calculated based on character classifications:
+
+```text
+Width = (sum of w(char) * fontSize) * weightMultiplier
+```
+
+Where:
+- Space character (`' '`): `w = 0.28`
+- Narrow characters (`'i', 'l', 'I', '|', '.', ':', ';', '!', "'"`): `w = 0.32`
+- Capital letters (`'A' .. 'Z'`): `w = 0.72`
+- Wide characters (`'m', 'w', 'M', 'W'` or Unicode > 127): `w = 0.88`
+- Standard characters: `w = 0.54`
+- Weight Multiplier: `1.15` if `fontWeight >= 600`, else `1.0`.
+
+### Line Wrapping & Line Height
+If `node.wrap === true` and the raw computed width exceeds `maxWidth` (or the default limit of 260px):
+
+```text
+LineCount = max(1, ceil(rawWidth / wrapLimit))
+ComputedHeight = LineCount * (node.lineHeight ?? floor(fontSize * 1.35))
+```
+
+This allows `@vitra/layout` to provide Yoga with deterministic text constraints, producing pixel-accurate bounding boxes across macOS, Linux, and Windows CI environments.
+
+---
+
+## 6. Layout Computation API
+
+To calculate absolute layout coordinates for any node in an active scene:
+
+```typescript
+import { createSceneStore } from '@vitra/core';
+import { computeLayout } from '@vitra/layout';
+
+const store = createSceneStore();
+// populate store...
+
+const layoutResult = await computeLayout(store, 'artboard-desktop');
+
+console.log(layoutResult);
+// Output:
+// {
+//   nodeId: 'artboard-desktop',
+//   bounds: { x: 0, y: 0, width: 1440, height: 900 },
+//   children: [
+//     {
+//       nodeId: 'navbar-frame',
+//       bounds: { x: 0, y: 0, width: 1440, height: 72 },
+//       children: [...]
+//     }
+//   ]
+// }
+```
+
+---
+
+## 7. Design Tokens & Theme Switching (`@vitra/tokens`)
+
+Design tokens in Vitra follow the official **W3C Design Tokens Community Group (DTCG)** specification. Tokens are stored in `<project>/tokens/tokens.json` and power multi-theme switching across dark and light modes.
+
+### Token Schema Structure
+
+```json title="tokens/tokens.json"
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "version": "1.0.0",
+  "tokens": {
+    "color": {
+      "background": { "$value": "#0D0E12", "$type": "color" },
+      "surface": { "$value": "#15171D", "$type": "color" },
+      "border": { "$value": "#1F222A", "$type": "color" },
+      "text": { "$value": "#FFFFFF", "$type": "color" },
+      "primary": { "$value": "#3B82F6", "$type": "color" }
+    },
+    "radius": {
+      "sm": { "$value": 6, "$type": "dimension" },
+      "md": { "$value": 10, "$type": "dimension" },
+      "lg": { "$value": 16, "$type": "dimension" }
+    },
+    "spacing": {
+      "sm": { "$value": 8, "$type": "dimension" },
+      "md": { "$value": 16, "$type": "dimension" },
+      "lg": { "$value": 24, "$type": "dimension" }
+    }
+  },
+  "themes": {
+    "light": {
+      "color": {
+        "background": { "$value": "#F8FAFC", "$type": "color" },
+        "surface": { "$value": "#FFFFFF", "$type": "color" },
+        "border": { "$value": "#E2E8F0", "$type": "color" },
+        "text": { "$value": "#0F172A", "$type": "color" }
+      }
+    }
+  }
+}
+```
+
+### Visual AST Token References
+In Vitra scene nodes, properties can reference design tokens directly using `$` prefix notation:
+- `"fill": "$color.background"`
+- `"stroke": "$color.border"`
+- `"cornerRadius": "$radius.lg"`
+- `"gap": "$spacing.md"`
+
+### Dynamic Theme Resolution Engine
+The `@vitra/tokens` engine (`TokenRegistry`) resolves values through a two-tier mechanism:
+1. **Direct Token References**: If a node specifies `fill: "$color.background"`, `TokenRegistry.resolveValue()` checks for an active theme override (e.g. `themes.light.color.background`), falling back to base tokens.
+2. **Base Hex Remapping**: If a scene contains legacy or imported base hex colors (e.g. `#0D0E12`), activating `--theme light` automatically matches the hex value against the registered base token palette and swaps it with the active theme override (`#F8FAFC`).
+
+### Ingesting Codebase Tokens from `globals.css`
+Engineering teams do not need to create `tokens.json` manually. Vitra can extract CSS variables directly from existing Tailwind or CSS codebases:
+```bash title="terminal"
+vitra tokens import ./src/styles/globals.css
+```
+This automatically parses `:root` into base tokens and `.dark` into theme overrides.
+
+---
+
+## Next Steps
+
+- [Visual Version Control & Git Store](/docs/version-control)
+- [Headless Rendering & Accessibility Audits](/docs/eval-audit)
+- [Multi-Target Code Compilation](/docs/codegen)

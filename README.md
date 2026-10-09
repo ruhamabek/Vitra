@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon-128.png" alt="Vitra Icon" width="96" height="96" />
+  <img src="assets/icon.png" alt="Vitra Icon" width="96" height="96" />
 </p>
 
 # Vitra
@@ -48,7 +48,7 @@ Traditional design tooling relies on opaque, monolithic binary files or non-dete
 |                       Vitra Ecosystem                           |
 +-----------------------------------------------------------------+
 |  Applications & Integrations                                    |
-|    apps/landing          Linear v3 Inspired Official Landing    |
+|    apps/docs             Landing Page & Interactive Docs Hub    |
 |    apps/canvas-web       Interactive Browser Canvas             |
 |    apps/penpot-plugin    Bidirectional Penpot Bridge            |
 |    apps/figma-plugin     Bidirectional Figma Bridge             |

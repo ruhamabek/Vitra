@@ -33,6 +33,14 @@ export class SyncServer implements SyncServerContext {
 
     this.wss = new WebSocketServer({ server: this.httpServer });
 
+    this.wss.on('error', (err) => {
+      if (options.onError) {
+        options.onError(err);
+      } else if (this.isReady) {
+        console.error('[Vitra Sync WSS Error]', err);
+      }
+    });
+
     this.httpServer.once('listening', () => {
       this.isReady = true;
     });

@@ -1,0 +1,127 @@
+---
+order: 1
+title: Overview
+description: The Universal Visual Runtime, Headless Design Engine, & Visual Version Control Protocol.
+icon: book
+related:
+  - /docs/getting-started
+  - /docs/agent-setup
+  - /docs/visual-ast
+  - /docs/cli
+agent:
+  task: "Understand Vitra architecture and navigate core documentation capabilities."
+  outcome: "Agent identifies correct packages, engines, CLI commands, and MCP tools."
+  prerequisites:
+    - "Node.js >= 18 or pnpm installed."
+  verification:
+    - "Run `vitra --help` or query the MCP server endpoint."
+---
+
+# Vitra: The Universal Visual Runtime
+
+**Vitra** is an open-source, AI-native visual runtime, headless layout engine, and visual version control protocol designed for modern engineering teams and autonomous AI agents.
+
+Traditionally, software engineering separated UI design from production code:
+1. **Design Tools (Figma, Penpot)** store visual interfaces in closed, binary canvas documents or web canvases disconnected from Git.
+2. **Codebases** store interfaces as imperative HTML/CSS/React components, leading to visual regressions, inconsistent tokens, and brittle layout code.
+3. **AI Agents** struggle with design because web scrapers return noisy HTML div-soup, and binary design files cannot be parsed or diffed.
+
+Vitra bridges this divide. It treats user interface design as a **deterministic, immutable Abstract Syntax Tree (Visual AST)** backed by a **Git-compatible content-addressable object store**. With Vitra, AI agents and engineers can inspect, mutate, audit, render, and version design systems with mathematical precision.
+
+---
+
+## The Core Problem Vitra Solves
+
+```text
++------------------------+      +---------------------------+      +------------------------+
+|      Figma/Penpot      |      |     Autonomous AI Agent   |      |    React / SwiftUI     |
+| (Proprietary Canvas)   |      |    (Cursor, Claude, AGY)  |      |   (Production Code)    |
++------------------------+      +---------------------------+      +------------------------+
+            \                                 |                                 /
+             \                                |                                /
+              v                               v                               v
+    +-----------------------------------------------------------------------------------+
+    |                                   VITRA PROTOCOL                                  |
+    |  • Deterministic Visual AST                               • W3C DTCG Tokens       |
+    |  • Headless Yoga Flexbox Engine                           • Headless Resvg Render |
+    |  • Git-Compatible Content Store (.history)                • Automated WCAG Audits |
+    |  • Bi-Directional Figma & Penpot Sync                     • Live Canvas Studio    |
+    +-----------------------------------------------------------------------------------+
+```
+
+---
+
+## Architectural Pillars
+
+The Vitra ecosystem is organized into modular packages engineered for speed, headless execution, and strict determinism:
+
+### 1. Deterministic Visual AST (`@vitra/core`)
+All UI scenes are represented as a typed, tree-structured AST comprising 7 fundamental node types: `DOCUMENT`, `ARTBOARD`, `FRAME`, `TEXT`, `SHAPE`, `COMPONENT`, and `INSTANCE`. Every visual attribute (fills, strokes, corner radii, layout directions, typography tokens, auto-layout flex rules) is modeled as a lossless JSON schema.
+
+### 2. Headless Layout Engine (`@vitra/layout`)
+A high-performance layout computation engine powered by **Yoga Flexbox** compiled to WebAssembly. It calculates sub-pixel bounding boxes, handles complex flex constraints (`fixed`, `fill`, `hug`), and executes multi-line text measurement without requiring a browser or DOM.
+
+### 3. Native Headless Renderer (`@vitra/renderer`)
+A headless graphics pipeline combining vector SVG construction with **resvg-js** for pixel-perfect PNG rasterization. It supports Retina scale factors (`--scale 2`), Lucide vector icons, drop shadows, and a platform-aware font cascade (macOS *Helvetica Neue*, Windows *Segoe UI*, Linux *Cantarell / Noto Sans / Liberation Sans*).
+
+### 4. Git-Compatible Visual Version Control (`@vitra/core`)
+A content-addressable object store situated in `.history/`. Every node, tree, and commit is hashed using SHA-1 and compressed with zlib. Vitra provides true visual branching (`vitra branch`), staging (`vitra add`), commits with agent metadata (`vitra commit -m "..." --rationale "..."`), and 3-way AST merge reconciliation with visual conflict detection.
+
+### 5. Automated Visual & Accessibility Audits (`@vitra/eval`)
+Evaluates scene graphs against WCAG 2.1 AA/AAA contrast standards using exact relative luminance formulas (`L = 0.2126*R + 0.7152*G + 0.0722*B`). Vitra checks boundary overflow geometry and detects unmapped tokens directly in CLI or CI environments (`vitra audit --strict`).
+
+### 6. Real-Time Sync & Live Studio (`@vitra/sync`)
+A dual HTTP and WebSocket server running on port `9876`. It powers `vitra canvas`—an instant browser studio for visual manipulation modeled after Prisma Studio. Crucially, `@vitra/sync` tracks `UserEditRecord` metadata so AI agents never accidentally overwrite intentional human edits.
+
+### 7. Multi-Target Code Generation (`@vitra/codegen`)
+Compiles the Visual AST directly into clean production code targets:
+- **React + Tailwind CSS**
+- **SwiftUI**
+- **Semantic HTML5 & Modern CSS**
+- **Clean SVG & PNG**
+
+### 8. Bi-Directional Figma & Penpot Sync
+Bridges existing visual workflows into code repos:
+- `vitra import`: Ingests live Figma files via REST API tokens or Penpot `.json` exports into the Visual AST.
+- `vitra export-figma`: Serializes the Vitra AST into standard Figma REST JSON.
+- `vitra export-penpot`: Serializes the Vitra AST into Penpot open format.
+
+### 9. Model Context Protocol (`@vitra/mcp-server`) & Agent Skills
+Exposes 20 JSON-RPC tools and pre-configured skill instructions (`https://skills.sh/vitra`) enabling AI agents (Cursor, Claude Desktop, Antigravity) to act as autonomous design engineers.
+
+---
+
+## Workspace Package Anatomy
+
+```text
+Vitra Monorepo
+├── apps/
+│   ├── docs/             # Documentation platform & Agent Knowledge Base
+│   └── canvas-web/       # Browser canvas studio (SPA loaded by `vitra canvas`)
+├── packages/
+│   ├── cli/              # 24 CLI commands (bin: `vitra`)
+│   ├── core/             # Visual AST schemas, Git store, 3-way merge, Figma/Penpot I/O
+│   ├── layout/           # Yoga Flexbox Wasm engine & text measurement
+│   ├── renderer/         # Headless SVG & resvg PNG rasterizer with Lucide icons
+│   ├── eval/             # WCAG 2.1 contrast audits & layout collision evaluation
+│   ├── codegen/          # Multi-target compiler (React/Tailwind, SwiftUI, HTML)
+│   ├── tokens/           # W3C DTCG token parser, resolver, & CSS variable extractor
+│   ├── sync/             # Dual HTTP/WS server & human-edit conflict tracker
+│   └── mcp-server/       # 20 Model Context Protocol tools for AI agents
+└── .agents/skills/vitra/ # Vitra agent skill definition (SKILL.md)
+```
+
+---
+
+## Next Steps
+
+Explore the documentation sections to master Vitra:
+
+- [Getting Started & Installation](/docs/getting-started)
+- [AI Agent Setup & System Prompt](/docs/agent-setup)
+- [Visual AST & Layout Engine](/docs/visual-ast)
+- [Visual Version Control & Git Engine](/docs/version-control)
+- [Headless Rendering & Accessibility Audits](/docs/eval-audit)
+- [Code Generation & Real-time Canvas](/docs/codegen)
+- [CLI Reference (All 24 Commands)](/docs/cli)
+- [Model Context Protocol & Agent Skills](/docs/mcp)

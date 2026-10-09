@@ -52,8 +52,8 @@ export function renderToSvg(
   const registry = options?.tokenRegistry;
 
   function resolveVal(val?: string | number): string | number | undefined {
-    if (typeof val === 'string' && val.startsWith('$') && registry) {
-      return registry.resolve(val);
+    if (val !== undefined && registry) {
+      return registry.resolveValue(val);
     }
     return val;
   }

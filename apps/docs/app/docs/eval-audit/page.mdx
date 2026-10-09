@@ -1,0 +1,148 @@
+---
+order: 6
+title: Auditing & Headless Renderer
+description: Automated WCAG 2.1 AA/AAA contrast checks, layout overflow audits, and resvg-js PNG rendering.
+icon: shield
+related:
+  - /docs/getting-started
+  - /docs/visual-ast
+  - /docs/cli
+agent:
+  task: "Run headless visual accessibility audits and render rasterized PNG previews."
+  outcome: "WCAG contrast validation with strict CI exit codes and pixel-perfect PNG renders."
+  prerequisites:
+    - "Vitra project directory with scene nodes."
+  files:
+    - "packages/eval/src/color.ts"
+    - "packages/eval/src/auditor.ts"
+    - "packages/renderer/src/renderer.ts"
+---
+
+# Auditing & Headless Renderer
+
+Engineering teams typically rely on manual QA or fragile end-to-end browser tests to detect accessibility issues and layout regressions. Vitra replaces this with **headless visual auditing** (`@vitra/eval`) and **headless graphics rendering** (`@vitra/renderer`).
+
+Both engines execute purely in Node.js and WebAssembly—requiring zero Chromium instances, zero Puppeteer scripts, and zero headless browser overhead.
+
+---
+
+## 1. Automated Accessibility Auditing (`@vitra/eval`)
+
+The `@vitra/eval` engine performs static analysis over the Visual AST and layout bounding boxes:
+
+```bash title="terminal"
+# Audit default base tokens
+vitra audit ./my-design.vitra --strict
+
+# Audit specific theme overrides (e.g. dark mode)
+vitra audit ./my-design.vitra --theme dark --strict
+```
+
+To compute contrast ratios, Vitra linearizes 8-bit sRGB color channels into CIE XYZ linear space:
+
+```text
+Linear Channel Calculation:
+  If C_srgb <= 0.04045:
+    C_linear = C_srgb / 12.92
+  Else:
+    C_linear = ((C_srgb + 0.055) / 1.055) ^ 2.4
+```
+
+Relative luminance (`L`) is then calculated using standard photometric coefficients:
+
+```text
+L = 0.2126 * R_linear + 0.7152 * G_linear + 0.0722 * B_linear
+```
+
+The contrast ratio (`CR`) between foreground luminance (`L1`) and background luminance (`L2`) is:
+
+```text
+CR = (L1 + 0.05) / (L2 + 0.05)    (where L1 >= L2)
+```
+
+### WCAG Compliance Thresholds
+
+| Standard | Element Type | Minimum Ratio |
+| :--- | :--- | :--- |
+| **WCAG AA** | Normal Body Text (under 18pt or under 14pt bold) | **4.5 : 1** |
+| **WCAG AA** | Large Text (18pt+ or 14pt+ bold) / UI Components | **3.0 : 1** |
+| **WCAG AAA** | Normal Body Text | **7.0 : 1** |
+| **WCAG AAA** | Large Text | **4.5 : 1** |
+
+---
+
+## 2. Boundary Overflow & Geometry Audits
+
+In addition to color contrast, `@vitra/eval` inspects spatial bounding boxes computed by the layout engine:
+
+```text
++---------------- Parent Frame (w: 300, h: 100) ----------------+
+|                                                               |
+|   +---- Child Node (w: 360, h: 40) -------------------------+ |
+|   | Text extends beyond parent container boundary!         |!| [OVERFLOW ERROR]
+|   +---------------------------------------------------------+ |
++---------------------------------------------------------------+
+```
+
+1. **Child Containment**: Verifies that child bounding boxes do not unintentionally bleed outside clipping parent frames.
+2. **Text Truncation Risk**: Detects non-wrapping text nodes whose measured physical width exceeds parent widths.
+3. **Unresolved Tokens**: Ensures all `$token.path` aliases reference registered W3C design tokens.
+
+### Strict CI Integration
+When running in automated CI pipelines:
+```bash title="terminal"
+# Fails with exit code 1 if any contrast or layout violation occurs
+vitra audit ./my-design.vitra --strict --json > audit-report.json
+```
+
+---
+
+## 3. Headless Graphics Pipeline (`@vitra/renderer`)
+
+`@vitra/renderer` converts the Visual AST into production visual assets:
+
+```text
+Visual AST + Computed Layout
+             |
+             v
+   renderToSvg() [Vector DOM Builder]
+             |
+             +---> Pure SVG Output (Scalable, lightweight)
+             |
+             v
+   @resvg/resvg-js [Native Rust Engine]
+             |
+             +---> Pixel-Perfect PNG Rasterization (Retina 1x, 2x, 3x)
+```
+
+### CLI Render Command
+```bash title="terminal"
+# Render an entire artboard
+vitra render ./my-design.vitra --node artboard-desktop --out preview.png --scale 2
+
+# Render a single component
+vitra render ./my-design.vitra --node profile-card --out card.png
+```
+
+### Platform-Calibrated Font Cascade
+To prevent cross-platform rendering discrepancies between local developer machines and headless Linux CI containers, Vitra implements an intelligent font cascade:
+
+- **macOS**: `Helvetica Neue`
+- **Windows**: `Segoe UI`
+- **Linux (Server/CI)**: Checks in sequence:
+  1. `Cantarell` (Fedora / GNOME)
+  2. `Noto Sans` (Ubuntu / Debian / Alpine)
+  3. `Liberation Sans`
+  4. `DejaVu Sans`
+  5. Fallback `sans-serif`
+
+### Native Lucide Icon Rendering
+Every `IconNode` is rendered directly into SVG paths using vector paths extracted from the Lucide icons library. Icons remain sharp at arbitrary DPI and scaling factors.
+
+---
+
+## Next Steps
+
+- [Multi-Target Code Compilation & Sync Server](/docs/codegen)
+- [Complete CLI Reference](/docs/cli)
+- [Model Context Protocol & Agent Skills](/docs/mcp)

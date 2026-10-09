@@ -1,0 +1,368 @@
+---
+order: 8
+title: Command Line Reference
+description: Complete specification of all 24 Vitra CLI commands, parameters, flags, and outputs.
+icon: terminal
+related:
+  - /docs/getting-started
+  - /docs/version-control
+  - /docs/eval-audit
+agent:
+  task: "Execute Vitra CLI commands with correct parameters and flags."
+  outcome: "Deterministic CLI execution across project initialization, version control, audits, and compilation."
+  prerequisites:
+    - "Vitra installed and linked in PATH."
+---
+
+# Command Line Reference
+
+The Vitra CLI (`vitra`) provides 25 deterministic commands covering project lifecycle, visual version control, headless audits, declarative specification compilation, and bi-directional design synchronization.
+
+```bash title="Command Synopsis"
+vitra <command> [options]
+```
+
+---
+
+## Command Quick Reference
+
+| Command | Purpose |
+| :--- | :--- |
+| **`init`** | Initialize a new `.vitra` project directory |
+| **`status`** | Show working tree status (staged, unstaged, untracked nodes) |
+| **`add`** | Stage nodes or entire scene (`.`) into the staging index |
+| **`restore`** | Discard unstaged changes in the working canvas |
+| **`reset`** | Unstage changes from the staging index |
+| **`commit`** | Record an agent/human commit snapshot with intent & rationale |
+| **`branch`** | List, create, or delete visual branches |
+| **`checkout`** | Switch branch or restore working canvas to a specific commit |
+| **`merge`** | Execute 3-way visual AST merge of target branch |
+| **`log`** | Display visual commit DAG history |
+| **`diff`** | Display visual AST diff between working tree, commits, or projects |
+| **`audit`** | Run headless WCAG contrast & boundary overflow accessibility audit |
+| **`apply`** | Atomically patch declarative component (`.json` or `design.md`) |
+| **`spec`** | Export UI tree to compact declarative `design.md` spec |
+| **`render`** | Render artboard or node directly to PNG image via resvg |
+| **`canvas`** | Launch interactive visual studio in browser (like Prisma Studio) |
+| **`serve`** | Start local sync server & WebSocket endpoint |
+| **`mcp`** | Launch Model Context Protocol server over stdio for AI agents |
+| **`export`** | Compile project to React + Tailwind, SwiftUI, HTML, SVG, or PNG |
+| **`import`** | Ingest Figma REST URL, Figma JSON, or Penpot JSON into Vitra |
+| **`export-figma`** | Export `.vitra` project to Figma REST API JSON format |
+| **`export-penpot`** | Export `.vitra` project to Penpot format |
+| **`tokens import`**| Ingest CSS custom properties from `globals.css` into W3C tokens |
+| **`hash-object`** | Compute SHA-1 hash and optionally create compressed Git object |
+| **`cat-file`** | Display decompressed object content or tree listing |
+| **`inspect`** | Pretty-print high-level visual scene hierarchy and node metrics |
+
+---
+
+## 1. Project Lifecycle & Composition
+
+### `vitra init`
+Initialize a new `.vitra` project directory with initial artboard and Git store.
+- **Syntax**: `vitra init <dir> [--name <name>] [--description <desc>]`
+- **Parameters**:
+  - `<dir>`: Target folder path (e.g. `./design.vitra`).
+  - `--name, -n`: Project name (saved in `vitra.json`).
+  - `--description, -d`: Project description.
+- **Output**: Creates `vitra.json`, `scene/root.json`, `tokens/tokens.json`, and `.history/`.
+
+### `vitra inspect`
+Pretty-print high-level visual scene hierarchy, node counts, and token references.
+- **Syntax**: `vitra inspect <dir>`
+- **Example**:
+  ```bash
+  vitra inspect ./my-design.vitra
+  ```
+
+### `vitra spec`
+Reverse-engineer an existing Visual AST node or artboard into a compact, indentation-based `design.md` specification file.
+- **Syntax**: `vitra spec [<dir>] [--out <file.md>] [--node <id>]`
+- **Parameters**:
+  - `--out`: Destination file path for generated markdown spec.
+  - `--node`: Specific node ID to serialize (defaults to root artboard).
+- **Example**:
+  ```bash
+  vitra spec ./my-design.vitra --node navbar-frame --out navbar.md
+  ```
+
+### `vitra apply`
+Atomically parse and mount a declarative component (`.json` or `design.md`) into the scene tree under a target parent.
+- **Syntax**: `vitra apply <dir> <file> [--parent <id>]`
+- **Parameters**:
+  - `<file>`: Path to `.md` or `.json` component file.
+  - `--parent`: Target parent node ID (e.g. artboard ID).
+- **Example**:
+  ```bash
+  vitra apply ./my-design.vitra hero-banner.md --parent desktop-artboard
+  ```
+
+---
+
+## 2. Visual Version Control
+
+### `vitra status`
+Show working tree status: staged modifications, unstaged node adjustments, and active branch.
+- **Syntax**: `vitra status [<dir>]`
+- **Example Output**:
+  ```text
+  On branch main
+  Changes to be committed:
+    (use "vitra reset <nodeId>..." to unstage)
+      modified: hero-banner
+
+  Untracked visual nodes:
+      added: feature-card-01
+  ```
+
+### `vitra add`
+Stage nodes or the entire canvas into the visual staging index.
+- **Syntax**: `vitra add [<dir>] <nodeId...>` (use `.` to stage all nodes).
+- **Example**:
+  ```bash
+  vitra add ./my-design.vitra profile-card .
+  ```
+
+### `vitra commit`
+Record staged changes into `.history/` with semantic metadata.
+- **Syntax**: `vitra commit <dir> -m <message> [--rationale <r>] [--author <name>]`
+- **Parameters**:
+  - `-m`: Commit message header.
+  - `--rationale`: Technical or architectural reason for the change.
+  - `--author`: Author name (defaults to active user or agent model).
+- **Example**:
+  ```bash
+  vitra commit ./my-design.vitra -m "feat: add user avatar row" --rationale "Updated layout to hug content with 12px gap"
+  ```
+
+### `vitra restore`
+Discard unstaged adjustments in the working canvas and revert nodes back to the current HEAD snapshot.
+- **Syntax**: `vitra restore [<dir>] <nodeId...>`
+
+### `vitra reset`
+Unstage nodes from the staging index without altering working canvas content.
+- **Syntax**: `vitra reset [<dir>] <nodeId...>`
+
+### `vitra branch`
+List visual branches or delete an existing branch.
+- **Syntax**: `vitra branch [<dir>] [-d <branchName>]`
+
+### `vitra checkout`
+Switch active branch or checkout a specific commit SHA.
+- **Syntax**: `vitra checkout [<dir>] [-b] <ref>`
+- **Example**:
+  ```bash
+  vitra checkout ./my-design.vitra -b feature/dark-theme
+  ```
+
+### `vitra merge`
+Execute 3-way AST merge of target branch into current HEAD.
+- **Syntax**: `vitra merge [<dir>] <branch>`
+- **Example**:
+  ```bash
+  vitra merge ./my-design.vitra feature/dark-theme
+  ```
+
+### `vitra log`
+Display the commit DAG history log with hashes, author metadata, and intent.
+- **Syntax**: `vitra log <dir>`
+
+### `vitra diff`
+Display AST-level visual diff between working tree, commits, or two project directories.
+- **Syntax**: `vitra diff <dirA> [dirB]`
+
+---
+
+## 3. Auditing & Rendering
+
+### `vitra audit`
+Execute automated WCAG 2.1 AA/AAA contrast checks and boundary overflow analysis.
+- **Syntax**: `vitra audit [<dir>] [--strict] [--json] [--node <id>] [--theme <t>]`
+- **Flags**:
+  - `--strict`: Exits with code `1` if any contrast or overflow violation occurs.
+  - `--json`: Outputs structured JSON report suitable for CI parsing.
+  - `--node`: Scope audit to a specific node and its subtree.
+  - `--theme`: Evaluate contrast against a specific token theme (e.g. `"dark"`, `"light"`).
+- **Example**:
+  ```bash
+  # Audit default theme with strict exit codes
+  vitra audit ./my-app.vitra --strict
+
+  # Audit light mode contrast against light backgrounds
+  vitra audit ./my-app.vitra --theme light --strict
+  ```
+
+### `vitra render`
+Rasterize an artboard or node directly to a crisp PNG image using resvg.
+- **Syntax**: `vitra render <dir> [--out <file.png>] [--node <id>] [--scale <s>] [--theme <t>]`
+- **Flags**:
+  - `--out`: Destination file path (defaults to `<nodeId>.png`).
+  - `--node`: Specific node ID to render (defaults to first artboard).
+  - `--scale`: Pixel density scale factor (`1`, `2` for Retina, `3`). Default is `1`.
+  - `--theme`: Apply a registered theme override to tokens before rasterizing (e.g. `"light"`, `"dark"`).
+- **Example**:
+  ```bash
+  # Render default theme at 2x Retina resolution
+  vitra render ./my-app.vitra --node artboard-desktop --scale 2 --out preview-dark.png
+
+  # Render light mode theme at 2x Retina resolution
+  vitra render ./my-app.vitra --node artboard-desktop --theme light --scale 2 --out preview-light.png
+  ```
+
+---
+
+## 4. Live Studio & Sync
+
+### `vitra canvas`
+Launch the interactive visual studio in your browser. Just like **Prisma Studio** gives you a live GUI for your database, `vitra canvas` gives you a live interactive canvas for your UI scene graph.
+- **Syntax**: `vitra canvas <dir> [--port <p>] [--no-open]`
+- **Parameters**:
+  - `--port`: Port number (default: `9876`).
+  - `--no-open`: Start server without automatically launching browser window.
+
+### `vitra serve`
+Alias for `canvas` that runs the local HTTP and WebSocket synchronization server.
+- **Syntax**: `vitra serve <dir> [--port <p>] [--no-open]`
+
+### `vitra mcp`
+Launch the Model Context Protocol (MCP) server over standard I/O (`stdio`). Allows AI agents (Claude Desktop, Cursor, Antigravity) to communicate with Vitra via JSON-RPC directly through the CLI binary without specifying Node.js script paths.
+- **Syntax**: `vitra mcp [<dir>]`
+- **Parameters**:
+  - `<dir>`: Target `.vitra` project directory (defaults to `./my-design.vitra` or `VITRA_PROJECT_PATH`).
+- **Example**:
+  ```bash
+  vitra mcp ./my-design.vitra
+  ```
+
+---
+
+## 5. Multi-Target Compilation & Design Sync
+
+### `vitra export`
+Compile the Visual AST into production code targets.
+- **Syntax**: `vitra export <dir> --target <t> [--out <path>]`
+- **Supported Targets**: `react`, `swiftui`, `html`, `svg`, `png`.
+
+### `vitra import`
+Ingest existing designs from Figma or Penpot into Vitra.
+- **Syntax**: `vitra import <file|url> [--token <t>] [--out <dir>]`
+- **Examples**:
+  ```bash
+  # Live Figma URL with token
+  vitra import https://www.figma.com/file/aBc123XyZ/App --token figd_xxx --out ./my-design.vitra
+
+  # Penpot JSON file
+  vitra import ./penpot-export.json --out ./my-design.vitra
+  ```
+
+### `vitra export-figma`
+Export `.vitra` project into Figma REST API JSON format.
+- **Syntax**: `vitra export-figma <dir> [--out <file.json>]`
+
+### `vitra export-penpot`
+Export `.vitra` project into Penpot format.
+- **Syntax**: `vitra export-penpot <dir> [--out <file.json>]`
+
+### `vitra tokens import`
+Ingests CSS custom properties (variables) from an existing codebase (`globals.css`, Tailwind v4 theme, or component stylesheets) and converts them into standardized W3C Design Tokens Community Group (DTCG) `tokens.json`.
+
+- **Syntax**: `vitra tokens import <cssFile> [--project <dir>] [--out <tokens.json>]`
+- **Options**:
+  - `<cssFile>`: Path to your input stylesheet (e.g. `./src/styles/globals.css`).
+  - `--out <file>`: Destination JSON output path (defaults to `<projectDir>/tokens.json`).
+  - `--project <dir>`: Vitra project directory to associate the tokens with.
+
+#### Example: Ingesting Tailwind / shadcn `globals.css`
+
+Given an existing frontend stylesheet with base and dark mode variables:
+
+```css title="src/styles/globals.css"
+:root {
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-primary: #3b82f6;
+  --color-text: #0f172a;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --spacing-md: 16px;
+}
+
+.dark {
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-primary: #60a5fa;
+  --color-text: #f8fafc;
+}
+```
+
+Run the import command:
+
+```bash title="terminal"
+vitra tokens import ./src/styles/globals.css --out ./my-app.vitra/tokens/tokens.json
+```
+
+Output:
+```text
+✨ Successfully imported design tokens from globals.css
+   Destination: ./my-app.vitra/tokens/tokens.json
+   Total Variables: 12
+   Categories: colors, radii, spacing
+   Themes Detected: dark
+```
+
+Vitra automatically detects `:root`, `html`, and `body` as base tokens, and maps `.dark`, `.light`, and `[data-theme="..."]` selectors into corresponding theme overrides in W3C DTCG format:
+
+```json title="tokens.json"
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "version": "1.0.0",
+  "tokens": {
+    "colors": {
+      "background": { "$value": "#ffffff", "$type": "color" },
+      "surface": { "$value": "#f8fafc", "$type": "color" },
+      "primary": { "$value": "#3b82f6", "$type": "color" },
+      "text": { "$value": "#0f172a", "$type": "color" }
+    },
+    "radii": {
+      "sm": { "$value": 4, "$type": "dimension" },
+      "md": { "$value": 8, "$type": "dimension" },
+      "lg": { "$value": 16, "$type": "dimension" }
+    },
+    "spacing": {
+      "md": { "$value": 16, "$type": "dimension" }
+    }
+  },
+  "themes": {
+    "dark": {
+      "colors": {
+        "background": { "$value": "#0f172a", "$type": "color" },
+        "surface": { "$value": "#1e293b", "$type": "color" },
+        "primary": { "$value": "#60a5fa", "$type": "color" },
+        "text": { "$value": "#f8fafc", "$type": "color" }
+      }
+    }
+  }
+}
+```
+
+---
+
+## 6. Low-Level Plumbing Commands
+
+### `vitra hash-object`
+Compute standard Git SHA-1 object hash and optionally compress with zlib into `.history/objects/`.
+- **Syntax**: `vitra hash-object [-w] <file>`
+
+### `vitra cat-file`
+Decompress and print contents of a loose object by SHA-1 hash.
+- **Syntax**: `vitra cat-file [<dir>] -p <sha>`
+
+---
+
+## Next Steps
+
+- [Model Context Protocol (MCP) & Agent Skills](/docs/mcp)
+- [Visual AST Deep Dive](/docs/visual-ast)
+- [AI Agent Setup Guide](/docs/agent-setup)

@@ -1,0 +1,242 @@
+---
+order: 2
+title: Getting Started
+description: Install Vitra via curl, PowerShell, or source, bootstrap a project, and run your first autonomous visual loop.
+icon: rocket
+related:
+  - /docs/agent-setup
+  - /docs/cli
+  - /docs/visual-ast
+agent:
+  task: "Install the Vitra binary and bootstrap a new visual design system repository."
+  outcome: "A functional .vitra project directory with initial scene graph, loose Git object store, and tokens."
+  prerequisites:
+    - "Node.js >= 18 or curl/bash on macOS/Linux or PowerShell on Windows."
+  files:
+    - "vitra.json"
+    - "scene/root.json"
+    - ".history/HEAD"
+    - "tokens/tokens.json"
+  commands:
+    - run: "curl -fsSL https://raw.githubusercontent.com/ruhamabek/Vitra/main/scripts/install.sh | bash"
+      description: "Install the standalone vitra CLI binary."
+    - run: "vitra init ./my-design.vitra --name 'Design System'"
+      description: "Initialize a new Vitra repository."
+    - run: "vitra status ./my-design.vitra"
+      description: "Confirm working tree initialization."
+---
+
+# Getting Started with Vitra
+
+Vitra transforms UI design into a version-controlled, testable engineering discipline. This guide walks you through installing the CLI, understanding project anatomy, creating components, and launching the live visual canvas.
+
+---
+
+## 1. Installation
+
+> [!NOTE]
+> Vitra is distributed via automated installer scripts and source repository builds. It is not currently published on the public npm registry.
+
+### macOS & Linux (Automated Script)
+Install the standalone `vitra` binary directly into your shell environment:
+```bash title="terminal"
+curl -fsSL https://raw.githubusercontent.com/ruhamabek/Vitra/main/scripts/install.sh | bash
+```
+
+### Windows (PowerShell)
+```powershell title="powershell"
+irm https://raw.githubusercontent.com/ruhamabek/Vitra/main/scripts/install.ps1 | iex
+```
+
+### Build from Source
+If you are developing inside the Vitra monorepo or prefer building locally:
+```bash title="terminal"
+# 1. Clone the repository
+git clone https://github.com/ruhamabek/Vitra.git
+cd Vitra
+
+# 2. Install dependencies & build packages
+pnpm install
+pnpm build
+
+# 3. Link binary globally
+pnpm link --global
+
+# Verify installation
+vitra --version
+# Output: 0.1.0
+```
+
+---
+
+## 2. Initialize a Visual Repository
+
+Initialize a `.vitra` project directory:
+
+```bash title="terminal"
+vitra init ./my-design.vitra --name "Production System" --description "Primary UI component library"
+```
+
+Output:
+```text
+✓ Vitra project initialized at: /workspace/my-design.vitra
+```
+
+### Project File Anatomy
+A Vitra project directory is self-contained and version-controlled:
+
+```text
+my-design.vitra/
+├── vitra.json              # Project manifest, schemaVersion, viewport dimensions & tokens
+├── scene/
+│   └── root.json           # Declarative JSON AST representing artboards & scene nodes
+├── tokens/
+│   └── tokens.json         # W3C DTCG design tokens (colors, typography, spacing, elevations)
+└── .history/               # Git-compatible content-addressable object store
+    ├── HEAD                # Pointer to active branch (e.g. ref: refs/heads/main)
+    ├── index               # Binary/JSON staging index tracking staged node hashes
+    ├── objects/            # Loose zlib-compressed SHA-1 objects (blobs, trees, commits)
+    └── refs/
+        └── heads/          # Branch pointers (main, feature/navbar, etc.)
+```
+
+> [!TIP]
+> **Have an Existing Codebase? Import Tokens in Seconds**
+> If you already have a Next.js, Tailwind, or Vite frontend with CSS custom properties in `globals.css`, you don't need to handcraft tokens:
+> ```bash
+> vitra tokens import ./src/styles/globals.css --out ./my-design.vitra/tokens/tokens.json
+> ```
+> Vitra automatically extracts all `:root` base variables (colors, radii, spacing) and parses `.dark` selectors into multi-theme overrides.
+
+---
+
+## 3. Verify Canvas Status
+
+Check the working tree and staging index status:
+
+```bash title="terminal"
+vitra status ./my-design.vitra
+```
+
+Output:
+```text
+On branch main
+Your branch is up to date with initial commit.
+
+Artboards:
+  ✓ Desktop Preview (1440x900) - 1 nodes
+
+No unstaged visual modifications.
+```
+
+---
+
+## 4. Compose & Apply UI (`design.md`)
+
+Vitra provides a human-and-agent-readable specification format (`design.md`) that eliminates JSON boilerplate:
+
+Create a file named `profile-card.md`:
+```markdown title="profile-card.md"
+- Frame: profile-card [w: 360, h: hug, dir: vertical, pad: 24, gap: 16, fill: "#ffffff", r: 12, stroke: "#e2e8f0", strokeWidth: 1]
+  - Frame: header-row [w: fill, h: hug, dir: horizontal, gap: 12, align: center]
+    - Shape: avatar [shape: ellipse, w: 48, h: 48, fill: "#3b82f6"]
+    - Frame: user-info [w: fill, h: hug, dir: vertical, gap: 4]
+      - Text: user-name [text: "Sarah Connor", size: 16, weight: 600, fill: "#0f172a"]
+      - Text: user-role [text: "Principal Systems Engineer", size: 14, weight: 400, fill: "#64748b"]
+  - Text: bio [text: "Leading autonomous agent infrastructure & visual compilers.", size: 14, weight: 400, fill: "#334155", wrap: true, maxW: 312]
+  - Frame: action-row [w: fill, h: hug, dir: horizontal, justify: space-between, align: center]
+    - Frame: connect-btn [w: hug, h: hug, dir: horizontal, padT: 8, padB: 8, padL: 16, padR: 16, fill: "#0f172a", r: 6]
+      - Text: btn-text [text: "Connect", size: 14, weight: 500, fill: "#ffffff"]
+    - Icon: bookmark-icon [icon: "bookmark", size: 20, color: "#64748b"]
+```
+
+Apply this declarative component directly into the scene root or active artboard:
+
+```bash title="terminal"
+vitra apply ./my-design.vitra profile-card.md --parent artboard-1
+```
+
+Output:
+```text
+✓ Applied profile-card (8 nodes) into artboard-1
+```
+
+---
+
+## 5. Render Headless Preview
+
+Rasterize the applied component or entire artboard directly to high-resolution PNG:
+
+```bash title="terminal"
+vitra render ./my-design.vitra --node profile-card --out preview.png --scale 2
+```
+
+Output:
+```text
+✓ Rendered profile-card to preview.png (720x460 @ 2x)
+```
+
+---
+
+## 6. Run Automated Accessibility Audits
+
+Validate that your colors satisfy WCAG 2.1 AA/AAA contrast ratios and that text does not overflow its bounding containers:
+
+```bash title="terminal"
+vitra audit ./my-design.vitra --strict
+```
+
+Output:
+```text
+============================================================
+              VITRA VISUAL ACCESSIBILITY AUDIT              
+============================================================
+
+✓ [CONTRAST] user-name (#0f172a on #ffffff) -> Ratio 16.1:1 (Required: 4.5:1) [AAA PASS]
+✓ [CONTRAST] user-role (#64748b on #ffffff) -> Ratio 4.8:1 (Required: 4.5:1) [AA PASS]
+✓ [CONTRAST] bio (#334155 on #ffffff) -> Ratio 9.2:1 (Required: 4.5:1) [AAA PASS]
+✓ [CONTRAST] btn-text (#ffffff on #0f172a) -> Ratio 18.2:1 (Required: 4.5:1) [AAA PASS]
+✓ [GEOMETRY] profile-card: All 8 children contained within bounds.
+✓ [TOKENS] No unresolved token variables detected.
+
+Summary: 0 Errors, 0 Warnings (Strict mode passed)
+```
+
+---
+
+## 7. Version Control: Stage & Commit
+
+Stage your changes into the visual staging index and commit with full semantic intent and rationale:
+
+```bash title="terminal"
+vitra add ./my-design.vitra .
+vitra commit ./my-design.vitra -m "feat(cards): implement responsive profile card" --rationale "Added Sarah Connor profile card with strict WCAG AAA contrast"
+```
+
+Output:
+```text
+[main 7f2a18c] feat(cards): implement responsive profile card
+ 1 artboard changed, 8 nodes inserted
+ Commit Hash: 7f2a18ceb934b1259e89d380962b1bdfac920194
+```
+
+---
+
+## 8. Launch the Interactive Canvas Studio
+
+Just as **Prisma Studio** (`npx prisma studio`) provides an interactive browser UI to inspect and manipulate database records, **`vitra canvas`** launches an interactive visual studio to view, pan, zoom, inspect, and tweak your design scene graph:
+
+```bash title="terminal"
+vitra canvas ./my-design.vitra --port 9876
+```
+
+This starts the sync server on `http://localhost:9876` and automatically opens the interactive canvas in your default browser. Any changes made in the browser canvas are synced over WebSockets and recorded as `UserEditRecord` objects, preventing AI agents from overwriting human adjustments.
+
+---
+
+## Next Steps
+
+- [Configure AI Agents & Prompts](/docs/agent-setup)
+- [Deep Dive: Visual AST Specification](/docs/visual-ast)
+- [Visual Branching, Diffing & Merging](/docs/version-control)
+- [Full CLI Reference](/docs/cli)

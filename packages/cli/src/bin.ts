@@ -22,6 +22,7 @@ import { applyComponentToProject, formatApplySummary } from './commands/apply.js
 import { runSpecCommand } from './commands/spec.js';
 import { runRenderCommand, formatRenderSummary } from './commands/render.js';
 import { importDesign, exportFigma, exportPenpot } from './commands/import.js';
+import { runMcpCommand } from './commands/mcp.js';
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -36,7 +37,7 @@ const HELP_TEXT = `
     
   Commands:
     init <dir>                 Initialize a new .vitra project directory
-    audit [<dir>]              Run automated WCAG contrast & layout overflow audit [--strict] [--json] [--node <id>]
+    audit [<dir>]              Run automated WCAG contrast & layout overflow audit [--strict] [--json] [--node <id>] [--theme <t>]
     apply <dir> <file>         Atomically insert/patch declarative component (.json or .md) [--parent <id>]
     spec [<dir>]               Export UI tree to compact design.md spec [--out <file.md>] [--node <id>]
     tokens import <cssFile>    Ingest CSS custom properties from globals.css [--out <tokens.json>]
@@ -56,9 +57,10 @@ const HELP_TEXT = `
     import <file|url>          Import Figma/Penpot JSON or live Figma URL [--token <t>] [--out <dir>]
     export-figma <dir>         Export .vitra project → Figma REST API JSON [--out <file.json>]
     export-penpot <dir>        Export .vitra project → Penpot JSON [--out <file.json>]
-    render <dir> [--out <f>]   Render artboard/node directly to PNG image [--node <id>] [--scale <s>]
+    render <dir> [--out <f>]   Render artboard/node directly to PNG image [--node <id>] [--scale <s>] [--theme <t>]
     hash-object [-w] <file>    Compute SHA-1 hash and optionally create zlib object
     cat-file [<dir>] -p <sha>  Display decompressed object content or tree listing
+    mcp [<dir>]                Start Model Context Protocol (MCP) server on stdio
     
   Options:
     -h, --help                 Show this help message
@@ -593,6 +595,7 @@ async function main() {
             out: { type: 'string', short: 'o' },
             node: { type: 'string', short: 'n' },
             scale: { type: 'string', short: 's' },
+            theme: { type: 'string', short: 't' },
           },
           allowPositionals: true,
         });
@@ -603,6 +606,7 @@ async function main() {
           out: values.out,
           node: values.node,
           scale,
+          theme: values.theme,
         });
 
         console.log('\n' + formatRenderSummary(result) + '\n');
@@ -706,6 +710,7 @@ async function main() {
             node: { type: 'string', short: 'n' },
             strict: { type: 'boolean' },
             json: { type: 'boolean' },
+            theme: { type: 'string', short: 't' },
             'no-exit-code': { type: 'boolean' },
           },
           allowPositionals: true,
@@ -716,6 +721,7 @@ async function main() {
           nodeId: values.node,
           strict: values.strict,
           json: values.json,
+          theme: values.theme,
         });
 
         if (values.json) {
@@ -778,6 +784,12 @@ async function main() {
         } else {
           console.log('\n' + result.markdown + '\n');
         }
+        break;
+      }
+
+      case 'mcp': {
+        const targetDir = args[1] && !args[1].startsWith('-') ? args[1] : undefined;
+        await runMcpCommand(targetDir);
         break;
       }
 
