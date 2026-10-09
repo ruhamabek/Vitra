@@ -33,8 +33,8 @@ When creating, inspecting, or updating UI components in a Vitra project, follow 
 1. Inspect Scene Graph    ➔  vitra inspect <dir> (or vitra spec <dir>)
 2. Compose Specification  ➔  Write or edit component.md using design.md syntax
 3. Atomic Ingestion       ➔  vitra apply <dir> component.md [--parent <id>]
-4. Visual Verification    ➔  vitra render <dir> --node <id> --out preview.png
-5. Accessibility Audit    ➔  vitra audit <dir> --strict
+4. Visual Verification    ➔  vitra render <dir> --node <id> [--theme <t>] --out preview.png --scale 2
+5. Accessibility Audit    ➔  vitra audit <dir> [--theme <t>] --strict
 6. Version Control        ➔  vitra add <dir> . && vitra commit <dir> -m "..."
 ```
 
@@ -147,14 +147,14 @@ All commands run against the `.vitra` project directory:
   Serializes any node subtree or the full canvas into clean, human-readable `design.md` format.
 
 ### Sensory Verification & Rendering
-- **`vitra render <projectDir> [--node <id>] [--out <file.png>] [--scale 2]`**
-  Renders the target node into a high-resolution PNG snapshot.
-- **`vitra audit <projectDir> [--strict] [--json]`**
-  Performs accessibility checks including WCAG 2.1 AA/AAA text-to-background contrast ratios and container boundary overflow detection. In strict mode, exits with a non-zero status code if violations are detected.
+- **`vitra render <projectDir> [--node <id>] [--out <file.png>] [--scale 2] [--theme <name>]`**
+  Renders the target node into a high-resolution PNG snapshot with optional theme overrides (e.g. `--theme light`).
+- **`vitra audit <projectDir> [--strict] [--json] [--theme <name>]`**
+  Performs accessibility checks including WCAG 2.1 AA/AAA text-to-background contrast ratios (evaluated against the active theme) and container boundary overflow detection. In strict mode, exits with a non-zero status code if violations are detected.
 
 ### Design Tokens & Theming
 - **`vitra tokens import <globals.css> [--out <tokens.json>]`**
-  Extracts CSS custom properties and generates standardized W3C Design Tokens with dark/light theme support.
+  Extracts CSS custom properties from `:root` and `.dark` selectors and generates standardized W3C Design Tokens with multi-theme support.
 - **`vitra tokens list <projectDir>`**
   Displays registered design tokens and their active values.
 
@@ -167,6 +167,12 @@ All commands run against the `.vitra` project directory:
 - **`vitra checkout <projectDir> [-b] <ref>`**: Switches the active branch or restores canvas state from a commit.
 - **`vitra diff [projectDir] [dirA] [dirB]`**: Computes structural and property-level AST diffs between versions.
 - **`vitra merge <projectDir> <branch>`**: Performs clean 3-way AST merge with automatic conflict detection and resolution.
+
+### Live Studio & Protocol
+- **`vitra canvas [projectDir] [--port <num>] [--no-open]`**
+  Launches the interactive visual studio in your browser on port 9876 with real-time WebSocket canvas synchronization.
+- **`vitra mcp [projectDir]`**
+  Starts the Model Context Protocol (MCP) server over standard I/O (`stdio`), allowing AI agents to call all 20 Vitra tools autonomously.
 
 ### Code Generation & Export
 - **`vitra export <projectDir> --target react-tailwind [--out <dir>]`**
