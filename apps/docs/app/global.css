@@ -512,6 +512,28 @@ aside#nd-sidebar {
 }
 
 /* ========================================================
+   Docs Layout Left Gap Alignment (Reduce Wide Screen Offset)
+   ======================================================== */
+:root {
+  --fd-threadline-frame-gutter: clamp(0.75rem, 1.5vw, 1.5rem) !important;
+}
+
+@media (min-width: 1280px) {
+  #nd-docs-layout:not([data-fd-framework]),
+  #nd-docs-layout[data-fd-framework],
+  #nd-docs-layout {
+    margin-left: var(--fd-threadline-frame-gutter) !important;
+    margin-right: auto !important;
+    margin-inline: var(--fd-threadline-frame-gutter) auto !important;
+  }
+}
+
+.dark aside#nd-sidebar,
+.dark .fd-sidebar {
+  border-right: 1px solid #1c1d1e !important;
+}
+
+/* ========================================================
    Sidebar Theme Switcher Polish
    ======================================================== */
 :is(aside#nd-sidebar, aside#nd-sidebar-mobile, .fd-sidebar) div:has(> button[data-theme-toggle]) {

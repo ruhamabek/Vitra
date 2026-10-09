@@ -52,7 +52,11 @@ export interface HeaderProps {
 function HeaderBrand() {
   return (
     <div className="flex items-center gap-3">
-      <div className="w-3 h-3 rounded-full bg-primary" />
+      <img
+        src="/icon-transparent.png"
+        alt="Vitra Logo"
+        className="w-5 h-5 object-contain shrink-0"
+      />
       <span className="font-bold text-base tracking-tight text-foreground">
         Vitra Canvas
       </span>
