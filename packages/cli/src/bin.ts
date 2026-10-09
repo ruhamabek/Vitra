@@ -99,7 +99,7 @@ async function main() {
   }
 
   if (command === '--version' || command === '-v') {
-    process.stdout.write('0.1.0\n');
+    process.stdout.write('0.2.0\n');
     return;
   }
 
@@ -788,6 +788,31 @@ async function main() {
       }
 
       case 'mcp': {
+        if (args.includes('--help') || args.includes('-h')) {
+          console.log(`
+  Usage:
+    vitra mcp [<dir>]
+
+  Description:
+    Starts the Vitra Model Context Protocol (MCP) server over standard I/O (stdio).
+    Enables AI agents (Claude Desktop, Cursor, Antigravity) to inspect, build, render,
+    audit, and version control UI designs autonomously.
+
+  Options:
+    -h, --help                 Show this help message
+
+  Agent Configuration (claude_desktop_config.json / .cursor/mcp.json):
+    {
+      "mcpServers": {
+        "vitra": {
+          "command": "vitra",
+          "args": ["mcp", "/absolute/path/to/my-project.vitra"]
+        }
+      }
+    }
+`);
+          return;
+        }
         const targetDir = args[1] && !args[1].startsWith('-') ? args[1] : undefined;
         await runMcpCommand(targetDir);
         break;
