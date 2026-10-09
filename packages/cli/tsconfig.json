@@ -11,6 +11,8 @@
     { "path": "../tokens" },
     { "path": "../renderer" },
     { "path": "../codegen" },
-    { "path": "../sync" }
+    { "path": "../eval" },
+    { "path": "../sync" },
+    { "path": "../mcp-server" }
   ]
 }
