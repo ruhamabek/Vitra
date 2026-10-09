@@ -41,7 +41,7 @@ jobs:
         uses: oven-sh/setup-bun@v2
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build all workspace packages
         run: pnpm --filter ...@vitra/cli build

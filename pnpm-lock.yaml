@@ -217,6 +217,9 @@ importers:
       '@vitra/layout':
         specifier: workspace:*
         version: link:../layout
+      '@vitra/mcp-server':
+        specifier: workspace:*
+        version: link:../mcp-server
       '@vitra/renderer':
         specifier: workspace:*
         version: link:../renderer
