@@ -6,7 +6,7 @@ export const Header: React.FC = () => {
   const [copied, setCopied] = useState(false);
 
   const copyInstall = () => {
-    navigator.clipboard.writeText('curl -fsSL https://vitra.dev/install.sh | bash');
+    navigator.clipboard.writeText('curl -fsSL https://raw.githubusercontent.com/ruhamabek/Vitra/main/scripts/install.sh | bash');
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -71,7 +71,7 @@ export const Header: React.FC = () => {
             title="Click to copy curl install command"
           >
             <Terminal className="w-3.5 h-3.5 text-vitra-cyan" />
-            <span>curl -fsSL vitra.dev/install.sh</span>
+            <span>curl -fsSL Vitra install.sh</span>
             {copied ? (
               <Check className="w-3.5 h-3.5 text-emerald-400" />
             ) : (

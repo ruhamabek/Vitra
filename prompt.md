@@ -135,12 +135,11 @@ If running inside an MCP-enabled environment (Claude Desktop, Cursor, Antigravit
 
 ---
 
-## 6. Agent Skill Discovery (`skills.sh`)
+## 6. Agent Skill Installation
 
-You can install and keep the Vitra Agent Skill up-to-date using skills.sh:
+You can install and keep the Vitra Agent Skill up-to-date directly via GitHub:
 ```bash
-npx skills add vitra
-# Or reference online: https://skills.sh/vitra
+npx skills add ruhamabek/Vitra
 # Repository skill definition: .agents/skills/vitra/SKILL.md
 ```
 

@@ -162,14 +162,27 @@ vitra import ./figma-dump.json --out ./my-design.vitra
 vitra import ./penpot-export.json --out ./my-design.vitra
 ```
 
-### Exporting Vitra Projects to Figma & Penpot
-```bash title="terminal"
-# Export .vitra project into Figma REST API JSON
-vitra export-figma ./my-design.vitra --out ./figma-export.json
+### Live Real-Time Penpot Sync
 
-# Export .vitra project into Penpot format
-vitra export-penpot ./my-design.vitra --out ./penpot-export.json
-```
+Beyond static JSON export/import, Vitra provides live bi-directional synchronisation directly inside the Penpot workspace:
+
+1. **Launch the Vitra Sync Engine**:
+   ```bash title="terminal"
+   vitra canvas ./my-design.vitra --port 9888
+   ```
+2. **Install the Penpot Plugin**:
+   - Open your project in [Penpot](https://design.penpot.app).
+   - Go to the **Plugin Manager** (or right-click → **Plugins**).
+   - Click **Install plugin** (or *Install from URL*).
+   - Paste the official plugin manifest URL:
+     ```
+     https://ruhamabek.github.io/Vitra/manifest.json
+     ```
+3. **Connect to your Local Session**:
+   - Launch the installed **Vitra Live Sync** plugin inside your Penpot canvas.
+   - Enter your WebSocket port (e.g. `9888`).
+   - Click **Connect**.
+   - Your Penpot canvas is now synchronized in real-time with your Vitra AST, local Git history, and any connected AI agents!
 
 ---
 

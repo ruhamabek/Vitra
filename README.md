@@ -10,7 +10,7 @@
   <a href="https://github.com/ruhamabek/Vitra/releases"><img src="https://img.shields.io/github/v/release/ruhamabek/Vitra?color=00f0ff&style=flat-square" alt="Latest Release" /></a>
   <a href="https://github.com/ruhamabek/Vitra/releases"><img src="https://img.shields.io/github/downloads/ruhamabek/Vitra/total?color=2563eb&label=downloads&style=flat-square" alt="Downloads" /></a>
   <a href="https://github.com/ruhamabek/Vitra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ruhamabek/Vitra?color=blue&style=flat-square" alt="AGPL-3.0 License" /></a>
-  <a href="https://skills.sh"><img src="https://img.shields.io/badge/skills.sh-vitra-00f0ff?style=flat-square" alt="Agent Skill" /></a>
+  <a href="https://github.com/ruhamabek/Vitra"><img src="https://img.shields.io/badge/skills-ruhamabek%2FVitra-00f0ff?style=flat-square" alt="Agent Skill" /></a>
 </p>
 
 Vitra is an open-source, AI-native visual runtime, layout engine, and spatial version control system. It introduces a formal Visual Abstract Syntax Tree (AST), a Git-compatible content-addressable object store for user interfaces, bidirectional synchronisation adapters for Figma and Penpot, and a Model Context Protocol (MCP) server enabling autonomous agents to inspect, audit, mutate, and version software interfaces with mathematical precision.
@@ -86,7 +86,7 @@ Traditional design tooling relies on opaque, monolithic binary files or non-dete
 Install the standalone binary via the automated installer:
 
 ```bash
-curl -fsSL https://ruhamabek.github.io/Vitra/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ruhamabek/Vitra/main/scripts/install.sh | bash
 ```
 
 The script automatically detects your system architecture (`linux-x64`, `linux-arm64`, `darwin-x64`, `darwin-arm64`), downloads the latest release, places the executable into `~/.local/bin/vitra`, and validates execution integrity.
@@ -298,11 +298,26 @@ vitra serve my-app.vitra --port 9878 --no-open
 ```
 
 #### `vitra canvas <directory> [--port <port>]`
-Launch the standalone browser-based visual canvas interface connected to the active project.
+Launch the standalone browser-based visual canvas interface and WebSocket sync server connected to the active project.
 
 ```bash
 vitra canvas my-app.vitra --port 9878
 ```
+
+#### Connecting Penpot Live Sync
+To connect Penpot to your local Vitra design project:
+1. Start the Vitra sync server:
+   ```bash
+   vitra canvas ./my-design.vitra --port 9878
+   ```
+2. In Penpot (Web or Desktop), open your workspace and navigate to **Plugins & Integrations** (or the Plugin Manager).
+3. Click **Install Plugin** and enter the hosted manifest URL:
+   ```
+   https://ruhamabek.github.io/Vitra/manifest.json
+   ```
+4. Open the plugin inside your Penpot board.
+5. In the WebSocket port input, enter your running port (e.g., `9878`) and click **Connect**.
+6. Changes will now sync bidirectionally between Penpot, Vitra, and connected AI agents in real time!
 
 ---
 

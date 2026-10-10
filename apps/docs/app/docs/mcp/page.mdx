@@ -1,24 +1,24 @@
 ---
 order: 9
 title: Model Context Protocol (MCP) & Skills
-description: Complete specification of all 20 Vitra MCP tools, schemas, and skills.sh agent integration.
+description: Complete specification of all 20 Vitra MCP tools, schemas, and agent skill integration.
 icon: settings
 related:
   - /docs/agent-setup
   - /docs/cli
   - /docs/visual-ast
 agent:
-  task: "Call Vitra MCP tools and configure skills.sh integration for autonomous agents."
+  task: "Call Vitra MCP tools and configure agent skills for autonomous agents."
   outcome: "20 MCP tools integrated via JSON-RPC protocol with complete parameter validation."
   prerequisites:
-    - "Vitra MCP server or skills.sh client."
+    - "Vitra MCP server or agent skill."
 ---
 
 # Model Context Protocol (MCP) & Skills
 
 Vitra implements Anthropic's **Model Context Protocol (MCP)**, providing autonomous AI agents (Claude Desktop, Cursor, Antigravity) with a typed JSON-RPC interface to manipulate the Visual AST, execute layout math, trigger audits, render images, and record Git commits.
 
-Additionally, Vitra ships with a ready-to-run Agent Skill published at **[https://skills.sh/vitra](https://skills.sh/vitra)**.
+Additionally, Vitra ships with a ready-to-run Agent Skill in `.agents/skills/vitra/` installable directly via `npx skills add ruhamabek/Vitra`.
 
 ---
 
@@ -96,15 +96,12 @@ Create `.cursor/mcp.json` in your workspace root:
 4. Type: `command`.
 5. Command: `vitra mcp`.
 
-### Option C: Antigravity & Skills.sh
+### Option C: Antigravity & Agent Skills
 
-If using Antigravity, you can install the official Vitra Skill via [skills.sh](https://skills.sh/vitra) or directly from GitHub:
+If using Antigravity, you can install the official Vitra Skill directly from the GitHub repository:
 ```bash title="terminal"
 # Install directly from the GitHub repository
 npx skills add ruhamabek/Vitra
-
-# Or via skills.sh registry
-npx skills add vitra
 ```
 Or reference the in-repo skill at `.agents/skills/vitra/SKILL.md`.
 
