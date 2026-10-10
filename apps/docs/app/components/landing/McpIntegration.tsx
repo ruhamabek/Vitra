@@ -50,8 +50,9 @@ export const McpIntegration: React.FC = () => {
 
             <div className="p-4 rounded-lg bg-card border border-border font-mono text-xs text-muted-foreground">
               <div className="text-foreground mb-2 font-medium">Add to your AI agent or editor config:</div>
-              <div className="bg-background p-3 rounded border border-border text-vitra-cyan">
-                npx -y @vitra/mcp-server
+              <div className="bg-background p-3 rounded border border-border text-vitra-cyan space-y-1">
+                <div><span className="text-muted-foreground"># MCP Server:</span> vitra mcp</div>
+                <div><span className="text-muted-foreground"># Agent Skill:</span> npx skills add ruhamabek/Vitra</div>
               </div>
             </div>
           </div>
