@@ -47,6 +47,7 @@ jobs:
         run: |
           pnpm --filter ...canvas-web build
           node --experimental-strip-types scripts/embed-canvas.ts
+          node --experimental-strip-types scripts/embed-resvg-wasm.ts
 
       - name: Build all workspace packages
         run: pnpm --filter ...@vitra/cli build
