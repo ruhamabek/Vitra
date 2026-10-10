@@ -8,7 +8,8 @@ function getEmbeddedFont(): any {
   try {
     const gz = Buffer.from(EMBEDDED_FONT_GZIP_BASE64, "base64");
     const fontBuf = zlib.gunzipSync(gz);
-    _cachedFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
+    const buf = fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength);
+    _cachedFont = (opentype as any).parse(buf, {});
     return _cachedFont;
   } catch {
     return null;

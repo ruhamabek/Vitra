@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build": "tsc -b && cp src/opentype.js dist/opentype.js",
+    "build": "tsc -b",
     "test": "vitest run"
   },
   "dependencies": {
