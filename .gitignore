@@ -16,6 +16,7 @@ storyboard
 !apps/penpot-plugin/icon.png
 !assets/**
 !apps/docs/public/**
+!apps/canvas-web/public/**
 
 # Vitra projects
 *.vitra/

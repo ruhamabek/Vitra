@@ -6,6 +6,13 @@
 
 **The Universal Visual Runtime and Design Version Control Protocol**
 
+<p align="center">
+  <a href="https://github.com/ruhamabek/Vitra/releases"><img src="https://img.shields.io/github/v/release/ruhamabek/Vitra?color=00f0ff&style=flat-square" alt="Latest Release" /></a>
+  <a href="https://github.com/ruhamabek/Vitra/releases"><img src="https://img.shields.io/github/downloads/ruhamabek/Vitra/total?color=2563eb&label=downloads&style=flat-square" alt="Downloads" /></a>
+  <a href="https://github.com/ruhamabek/Vitra/blob/main/LICENSE"><img src="https://img.shields.io/github/license/ruhamabek/Vitra?color=blue&style=flat-square" alt="AGPL-3.0 License" /></a>
+  <a href="https://skills.sh"><img src="https://img.shields.io/badge/skills.sh-vitra-00f0ff?style=flat-square" alt="Agent Skill" /></a>
+</p>
+
 Vitra is an open-source, AI-native visual runtime, layout engine, and spatial version control system. It introduces a formal Visual Abstract Syntax Tree (AST), a Git-compatible content-addressable object store for user interfaces, bidirectional synchronisation adapters for Figma and Penpot, and a Model Context Protocol (MCP) server enabling autonomous agents to inspect, audit, mutate, and version software interfaces with mathematical precision.
 
 ---
