@@ -45,7 +45,7 @@ jobs:
 
       - name: Build Canvas Web UI and embed assets
         run: |
-          pnpm --filter canvas-web build
+          pnpm --filter ...canvas-web build
           node --experimental-strip-types scripts/embed-canvas.ts
 
       - name: Build all workspace packages
