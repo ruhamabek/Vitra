@@ -1,3 +1,19 @@
+import zlib from "node:zlib";
+import opentype from "./opentype.js";
+import { EMBEDDED_FONT_GZIP_BASE64 } from "./font-data.js";
+
+let _cachedFont: any = null;
+function getEmbeddedFont(): any {
+  if (_cachedFont) return _cachedFont;
+  try {
+    const gz = Buffer.from(EMBEDDED_FONT_GZIP_BASE64, "base64");
+    const fontBuf = zlib.gunzipSync(gz);
+    _cachedFont = opentype.parse(fontBuf.buffer.slice(fontBuf.byteOffset, fontBuf.byteOffset + fontBuf.byteLength));
+    return _cachedFont;
+  } catch {
+    return null;
+  }
+}
 import { ISceneStore, SceneNode } from '@vitra/core';
 import { LayoutNodeResult } from '@vitra/layout';
 import { TokenRegistry } from '@vitra/tokens';
@@ -32,6 +48,7 @@ export function getPlatformSansFont(): string {
 
 export interface RenderOptions {
   tokenRegistry?: TokenRegistry;
+  vectorizeText?: boolean;
 }
 
 export interface RenderPngOptions extends RenderOptions {
@@ -53,7 +70,7 @@ export function renderToSvg(
   const registry = options?.tokenRegistry;
 
   function resolveVal(val?: string | number): string | number | undefined {
-    if (val !== undefined && registry) {
+    if (val !== undefined && registry && typeof registry.resolveValue === 'function') {
       return registry.resolveValue(val);
     }
     return val;
@@ -169,6 +186,49 @@ export function renderToSvg(
       const lineHeight = Number(resolveVal(node.lineHeight) ?? fontSize * 1.35);
       const fill = resolveVal(node.fill) ?? '#000000';
       const fontWeight = resolveVal(node.fontWeight) ?? 400;
+
+      const embeddedFont = options?.vectorizeText ? getEmbeddedFont() : null;
+
+      if (embeddedFont) {
+        const ascentRatio = embeddedFont.ascender / (embeddedFont.ascender - embeddedFont.descender);
+        if (node.wrap) {
+          const wrapLimit = (node.maxWidth && node.maxWidth > 0) ? node.maxWidth : 260;
+          const words = node.text.split(' ');
+          const lines: string[] = [];
+          let currentLine = '';
+          for (const word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testW = embeddedFont.getAdvanceWidth(testLine, fontSize);
+            if (testW > wrapLimit && currentLine) {
+              lines.push(currentLine);
+              currentLine = word;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          if (currentLine) lines.push(currentLine);
+
+          const paths = lines.map((line, idx) => {
+            const lineY = (idx * lineHeight) + (fontSize * ascentRatio);
+            const p = embeddedFont.getPath(line, 0, lineY, fontSize);
+            return `<path d="${p.toPathData(2)}" fill="${fill}" />`;
+          }).join('\n');
+
+          return `
+            <g transform="translate(${x}, ${y})" ${filterAttr}>
+              ${paths}
+            </g>
+          `;
+        } else {
+          const baseline = (h - fontSize) / 2 + (fontSize * ascentRatio);
+          const p = embeddedFont.getPath(node.text, 0, baseline, fontSize);
+          return `
+            <g transform="translate(${x}, ${y})" ${filterAttr}>
+              <path d="${p.toPathData(2)}" fill="${fill}" />
+            </g>
+          `;
+        }
+      }
 
       if (node.wrap) {
         const wrapLimit = (node.maxWidth && node.maxWidth > 0) ? node.maxWidth : 260;
@@ -308,7 +368,7 @@ async function loadResvgClass(): Promise<any> {
 }
 
 export async function renderToPng(
-  svg: string,
+  svgOrInput: string | { store: ISceneStore; targetNodeId: string; layout: LayoutNodeResult; tokenRegistry?: TokenRegistry },
   options?: RenderPngOptions
 ): Promise<Buffer> {
   const primaryFont = getPlatformSansFont();
@@ -320,8 +380,22 @@ export async function renderToPng(
     );
   }
 
+  // Determine if using embedded WASM engine (which requires vector text for 100% font fidelity)
+  const isWasmEngine = ResvgClass.name === "EmbeddedResvg" || typeof ResvgClass.prototype?.asPng !== "function" && ResvgClass.toString().includes("EmbeddedResvg");
+
+  let svg: string;
+  if (typeof svgOrInput === "string") {
+    svg = svgOrInput;
+  } else {
+    // If input is store + layout, we can automatically vectorize text if using WASM engine
+    svg = renderToSvg(svgOrInput.store, svgOrInput.targetNodeId, svgOrInput.layout, {
+      tokenRegistry: svgOrInput.tokenRegistry ?? options?.tokenRegistry,
+      vectorizeText: isWasmEngine || options?.vectorizeText,
+    });
+  }
+
   const resvg = new ResvgClass(svg, {
-    fitTo: options?.scale ? { mode: 'zoom', value: options.scale } : { mode: 'original' },
+    fitTo: options?.scale ? { mode: "zoom", value: options.scale } : { mode: "original" },
     font: {
       loadSystemFonts: true,
       defaultFontFamily: primaryFont,
@@ -334,10 +408,10 @@ export async function renderToPng(
 
   const pngData = resvg.render();
   const result = pngData.asPng();
-  if (typeof pngData.free === 'function') {
+  if (typeof pngData.free === "function") {
     pngData.free();
   }
-  if (typeof resvg.free === 'function') {
+  if (typeof resvg.free === "function") {
     resvg.free();
   }
   return Buffer.isBuffer(result) ? result : Buffer.from(result);

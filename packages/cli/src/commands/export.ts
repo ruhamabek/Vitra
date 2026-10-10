@@ -61,7 +61,12 @@ export async function exportProject(targetDir: string, options: ExportOptions): 
         await fs.writeFile(filePath, svg, 'utf-8');
         generatedFiles.push(filePath);
       } else {
-        const pngBuf = await renderToPng(svg);
+        const pngBuf = await renderToPng({
+          store: project.store,
+          targetNodeId: target.id,
+          layout,
+          tokenRegistry: project.tokens as any,
+        });
         const filePath = path.join(outPath, `${safeName}.png`);
         await fs.writeFile(filePath, pngBuf);
         generatedFiles.push(filePath);
