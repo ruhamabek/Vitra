@@ -248,59 +248,61 @@ ${content}
 }
 
 async function loadResvgClass(): Promise<any> {
-   try {
-    const { initEmbeddedResvg, EmbeddedResvg } = await import('./embedded-wasm.js');
-    await initEmbeddedResvg();
-    return EmbeddedResvg;
-  } catch (err) {
-    // continue to native fallbacks
-  }
-
-   try {
-    const resvgModule = await import('@resvg/resvg-js');
+  // 1. Try native @resvg/resvg-js from module resolution
+  try {
+    const resvgModule = await import("@resvg/resvg-js");
     if (resvgModule?.Resvg) return resvgModule.Resvg;
-    if (typeof resvgModule === 'function') return resvgModule;
+    if (typeof resvgModule === "function") return resvgModule;
   } catch {}
 
-   try {
-    const { createRequire } = await import('node:module');
-    const localReq = createRequire(path.join(process.cwd(), 'package.json'));
-    const mod = localReq('@resvg/resvg-js');
+  // 2. Try local project require
+  try {
+    const { createRequire } = await import("node:module");
+    const localReq = createRequire(path.join(process.cwd(), "package.json"));
+    const mod = localReq("@resvg/resvg-js");
     if (mod?.Resvg) return mod.Resvg;
-    if (typeof mod === 'function') return mod;
+    if (typeof mod === "function") return mod;
   } catch {}
 
-   try {
-    const { createRequire } = await import('node:module');
+  // 3. Try probing installed locations (packages/renderer, nvm, npm, pnpm, etc.)
+  try {
+    const { createRequire } = await import("node:module");
     const candidateDirs = [
-      process.env.APPDATA ? path.join(process.env.APPDATA, 'npm', 'node_modules') : null,
-      process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'npm', 'node_modules') : null,
-      process.env.ProgramFiles ? path.join(process.env.ProgramFiles, 'nodejs', 'node_modules') : null,
-      process.env.NVM_BIN ? path.join(process.env.NVM_BIN, '..', 'lib', 'node_modules') : null,
-      process.env.HOME && process.version ? path.join(process.env.HOME, '.nvm', 'versions', 'node', process.version, 'lib', 'node_modules') : null,
-      '/usr/local/lib/node_modules',
-      '/usr/lib/node_modules',
-      process.env.HOME ? path.join(process.env.HOME, '.npm-global', 'lib', 'node_modules') : null,
-      process.env.HOME ? path.join(process.env.HOME, '.local', 'share', 'pnpm', 'global', 'node_modules') : null,
-      path.join(process.cwd(), 'node_modules'),
-      path.join(process.cwd(), 'packages', 'renderer', 'node_modules'),
+      path.join(process.cwd(), "packages", "renderer", "node_modules"),
+      path.join(process.cwd(), "node_modules"),
+      process.env.APPDATA ? path.join(process.env.APPDATA, "npm", "node_modules") : null,
+      process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, "npm", "node_modules") : null,
+      process.env.ProgramFiles ? path.join(process.env.ProgramFiles, "nodejs", "node_modules") : null,
+      process.env.NVM_BIN ? path.join(process.env.NVM_BIN, "..", "lib", "node_modules") : null,
+      process.env.HOME && process.version ? path.join(process.env.HOME, ".nvm", "versions", "node", process.version, "lib", "node_modules") : null,
+      "/usr/local/lib/node_modules",
+      "/usr/lib/node_modules",
+      process.env.HOME ? path.join(process.env.HOME, ".npm-global", "lib", "node_modules") : null,
+      process.env.HOME ? path.join(process.env.HOME, ".local", "share", "pnpm", "global", "node_modules") : null,
     ].filter(Boolean) as string[];
 
     for (const dir of candidateDirs) {
-      const targetPkg = path.join(dir, '@resvg', 'resvg-js');
+      const targetPkg = path.join(dir, "@resvg", "resvg-js");
       if (fs.existsSync(targetPkg)) {
         try {
-          const entryFile = fs.existsSync(path.join(targetPkg, 'index.js'))
-            ? path.join(targetPkg, 'index.js')
+          const entryFile = fs.existsSync(path.join(targetPkg, "index.js"))
+            ? path.join(targetPkg, "index.js")
             : targetPkg;
           const gReq = createRequire(entryFile);
           const mod = gReq(entryFile);
           if (mod?.Resvg) return mod.Resvg;
-          if (typeof mod === 'function') return mod;
+          if (typeof mod === "function") return mod;
         } catch {}
       }
     }
   } catch {}
+
+  // 4. Fallback to embedded zero-dependency WebAssembly engine
+  try {
+    const { initEmbeddedResvg, EmbeddedResvg } = await import("./embedded-wasm.js");
+    await initEmbeddedResvg();
+    return EmbeddedResvg;
+  } catch (err) {}
 
   return null;
 }
