@@ -43,6 +43,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
+      - name: Build Canvas Web UI and embed assets
+        run: |
+          pnpm --filter canvas-web build
+          node --experimental-strip-types scripts/embed-canvas.ts
+
       - name: Build all workspace packages
         run: pnpm --filter ...@vitra/cli build
 

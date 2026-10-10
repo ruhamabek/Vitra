@@ -2,6 +2,7 @@ import { ISceneStore, SceneNode } from '@vitra/core';
 import { LayoutNodeResult } from '@vitra/layout';
 import { TokenRegistry } from '@vitra/tokens';
 import fs from 'node:fs';
+import path from 'node:path';
 import { getSvgIconContent } from './icons.js';
 
 export function getPlatformSansFont(): string {
@@ -246,18 +247,60 @@ ${content}
 </svg>`;
 }
 
+async function loadResvgClass(): Promise<any> {
+   try {
+    const resvgModule = await import('@resvg/resvg-js');
+    if (resvgModule?.Resvg) return resvgModule.Resvg;
+    if (typeof resvgModule === 'function') return resvgModule;
+  } catch {}
+
+   try {
+    const { createRequire } = await import('node:module');
+    const localReq = createRequire(path.join(process.cwd(), 'package.json'));
+    const mod = localReq('@resvg/resvg-js');
+    if (mod?.Resvg) return mod.Resvg;
+    if (typeof mod === 'function') return mod;
+  } catch {}
+
+   try {
+    const { createRequire } = await import('node:module');
+    const candidateDirs = [
+       process.env.APPDATA ? path.join(process.env.APPDATA, 'npm', 'node_modules') : null,
+      process.env.LOCALAPPDATA ? path.join(process.env.LOCALAPPDATA, 'npm', 'node_modules') : null,
+      process.env.ProgramFiles ? path.join(process.env.ProgramFiles, 'nodejs', 'node_modules') : null,
+
+      '/usr/local/lib/node_modules',
+      '/usr/lib/node_modules',
+      process.env.HOME ? path.join(process.env.HOME, '.npm-global', 'lib', 'node_modules') : null,
+      process.env.HOME ? path.join(process.env.HOME, '.local', 'share', 'pnpm', 'global', 'node_modules') : null,
+    ].filter(Boolean) as string[];
+
+    for (const dir of candidateDirs) {
+      if (fs.existsSync(path.join(dir, '@resvg', 'resvg-js'))) {
+        try {
+          const gReq = createRequire(path.join(dir, 'package.json'));
+          const mod = gReq('@resvg/resvg-js');
+          if (mod?.Resvg) return mod.Resvg;
+          if (typeof mod === 'function') return mod;
+        } catch {}
+      }
+    }
+  } catch {}
+
+  return null;
+}
+
 export async function renderToPng(
   svg: string,
   options?: RenderPngOptions
 ): Promise<Buffer> {
   const primaryFont = getPlatformSansFont();
-  let ResvgClass: any;
-  try {
-    const resvgModule = await import('@resvg/resvg-js');
-    ResvgClass = resvgModule.Resvg;
-  } catch {
+  const ResvgClass = await loadResvgClass();
+  if (!ResvgClass) {
     throw new Error(
-      "PNG rendering requires the optional dependency '@resvg/resvg-js'. You can export as SVG instead with: vitra export <dir> --target svg"
+      "PNG rendering requires '@resvg/resvg-js'. To enable PNG export:\n" +
+      "  Install in your project: npm install @resvg/resvg-js  (or npm install -g @resvg/resvg-js)\n" +
+      "Or export directly as vector SVG with: vitra export <dir> --target svg"
     );
   }
 

@@ -2,6 +2,7 @@ import * as http from 'node:http';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { EMBEDDED_CANVAS_ASSETS } from './embedded-canvas.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -89,6 +90,29 @@ export function createSyncHttpServer(options: HttpServerOptions): http.Server {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         if (req.method === 'GET') {
           fs.createReadStream(indexPath).pipe(res);
+        } else {
+          res.end();
+        }
+        return;
+      }
+    } else if (typeof EMBEDDED_CANVAS_ASSETS === 'object' && EMBEDDED_CANVAS_ASSETS !== null && Object.keys(EMBEDDED_CANVAS_ASSETS).length > 0) {
+      const targetAssetPath = pathname === '/' ? '/index.html' : pathname;
+      const embeddedAsset = EMBEDDED_CANVAS_ASSETS[targetAssetPath];
+      if (embeddedAsset) {
+        res.writeHead(200, { 'Content-Type': embeddedAsset.contentType });
+        if (req.method === 'GET') {
+          res.end(embeddedAsset.isBase64 ? Buffer.from(embeddedAsset.data, 'base64') : embeddedAsset.data);
+        } else {
+          res.end();
+        }
+        return;
+      }
+
+       const embeddedIndex = EMBEDDED_CANVAS_ASSETS['/index.html'];
+      if (embeddedIndex && !path.extname(pathname)) {
+        res.writeHead(200, { 'Content-Type': embeddedIndex.contentType });
+        if (req.method === 'GET') {
+          res.end(embeddedIndex.data);
         } else {
           res.end();
         }
