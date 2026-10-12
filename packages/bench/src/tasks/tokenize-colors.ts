@@ -149,10 +149,6 @@ export const tokenizeColorsTask: BenchTask = {
   reference: { nodes: [promoBoard(tokenized)], tokens: TOKENS },
   targetNodeId: 'board-tokens',
   callBudget: 8,
-  // The reference renders identically to the fixture and the audit is clean
-  // before any change, so visual and audit carry almost no signal here. Keep a
-  // small weight on each as regression detectors and score the migration
-  // itself through the functional checks.
   weights: { functional: 0.65, audit: 0.05, visual: 0.1, efficiency: 0.2 },
   checks: [
     {

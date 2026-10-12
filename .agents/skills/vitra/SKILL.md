@@ -2,7 +2,7 @@
 name: vitra
 description: >-
   AI-native design runtime and visual version control system. Use this skill to inspect,
-  build, audit, render, and version UI components using the Vitra CLI, design tokens,
+  build, audit, render, benchmark, and version UI components using the Vitra CLI, design tokens,
   and declarative design.md structural specifications.
 ---
 
@@ -14,7 +14,7 @@ Vitra is an AI-native design runtime and visual version control engine. It enabl
 
 ## 1. Platform Overview & Architecture
 
-Vitra bridges visual design and software engineering through six core capabilities:
+Vitra bridges visual design and software engineering through seven core capabilities:
 
 - **Headless Design Engine**: A deterministic scene graph featuring Artboards, Frames, Text, Shapes, and Vector Icons with flexbox-based Auto Layout semantics.
 - **Declarative Structural Specification (`design.md`)**: An indentation-based, human-readable markdown format that expresses complete layout hierarchies, visual styles, and responsive sizing.
@@ -22,6 +22,7 @@ Vitra bridges visual design and software engineering through six core capabiliti
 - **Sensory Rendering Engine**: Server-side rasterization to high-resolution PNG and SVG snapshots for visual inspection and verification.
 - **Automated Design Auditing**: Built-in accessibility auditing for WCAG 2.1 AA/AAA contrast ratios and container boundary overflow detection.
 - **Design Tokens & Code Generation**: Native support for the W3C Design Tokens Community Group specification, CSS variable extraction, multi-theme swapping, and direct compilation to production-ready React + Tailwind CSS code.
+- **Agent Evaluation Harness (`VitraBench`)**: Standardized benchmarking suite measuring LLM/agent UI design performance across functional AST correctness, visual pixel SSIM, WCAG accessibility, and tool call efficiency.
 
 ---
 
@@ -177,6 +178,17 @@ All commands run against the `.vitra` project directory:
 ### Code Generation & Export
 - **`vitra export <projectDir> --target react-tailwind [--out <dir>]`**
   Compiles visual nodes directly into production-ready React components styled with Tailwind CSS.
+
+### Agent Benchmarking & Evaluation (VitraBench)
+- **`vitra bench [--list] [--task <id...>] [--agent oracle|anthropic] [--model <id>] [--runs <n>] [--min-score <n>] [--out <file>] [--json]`**
+  Runs the VitraBench evaluation harness to objectively measure agent visual design capabilities against standardized tasks. Scores runs across 4 weighted dimensions: functional AST assertion (40%), visual raster SSIM similarity (30%), WCAG accessibility & contrast compliance (20%), and tool efficiency (10%).
+  - `--list`: Lists all registered benchmark tasks (e.g., `pricing-card`, `responsive-mobile`, `tokenize-colors`).
+  - `--agent <oracle|anthropic>`: Agent harness to run (`oracle` for gold-standard reference validation without LLM calls, `anthropic` for live Claude agent loops). Defaults to `oracle`.
+  - `--task <id>`: Specifies one or more benchmark task IDs to evaluate.
+  - `--min-score <n>`: Minimum passing threshold (0–100) for CI/CD gates; exits with a non-zero exit code if the mean score is lower.
+  - `--runs <n>`: Number of evaluation iterations per task for pass@k and statistical variance tracking.
+  - `--out <file>`: Persists full evaluation scorecard and run metrics to a JSON file.
+  - `--json`: Outputs raw JSON evaluation report to stdout.
 
 ---
 
