@@ -17,3 +17,4 @@ export * from './commands/audit.js';
 export * from './commands/apply.js';
 export * from './commands/spec.js';
 export * from './commands/render.js';
+export * from './commands/bench.js';

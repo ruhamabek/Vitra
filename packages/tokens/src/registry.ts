@@ -10,6 +10,18 @@ export type TokenTree = {
   [key: string]: TokenDefinition | TokenTree | string | number;
 };
 
+/**
+ * Plain-object copy of a registry's state, as returned by `TokenRegistry.snapshot()`.
+ */
+export interface TokenRegistrySnapshot {
+  /** Flattened base tokens keyed by dot path. */
+  base: Record<string, string | number>;
+  /** Flattened theme overrides keyed by theme name, then dot path. */
+  themes: Record<string, Record<string, string | number>>;
+  /** Currently active theme, or null for the base set. */
+  activeTheme: string | null;
+}
+
 export class TokenRegistry {
   private baseTokens = new Map<string, string | number>();
   private themes = new Map<string, Map<string, string | number>>();
@@ -41,6 +53,23 @@ export class TokenRegistry {
    */
   setTheme(themeName: string | null): void {
     this.activeTheme = themeName;
+  }
+
+  /**
+   * Returns a plain-object copy of the registry state: base tokens, theme
+   * overrides, and the active theme. Mutating the result does not affect the
+   * registry. Useful for detecting whether an operation changed any tokens.
+   */
+  snapshot(): TokenRegistrySnapshot {
+    const themes: Record<string, Record<string, string | number>> = {};
+    for (const [name, map] of this.themes) {
+      themes[name] = Object.fromEntries(map);
+    }
+    return {
+      base: Object.fromEntries(this.baseTokens),
+      themes,
+      activeTheme: this.activeTheme,
+    };
   }
 
   /**

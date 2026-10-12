@@ -175,8 +175,38 @@ importers:
         specifier: ^2.1.1
         version: 2.1.9(@types/node@22.20.3)(lightningcss@1.32.0)
 
+  packages/bench:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.0.4
+        version: 1.30.0(zod@3.25.76)
+      '@vitra/core':
+        specifier: workspace:*
+        version: link:../core
+      '@vitra/eval':
+        specifier: workspace:*
+        version: link:../eval
+      '@vitra/layout':
+        specifier: workspace:*
+        version: link:../layout
+      '@vitra/mcp-server':
+        specifier: workspace:*
+        version: link:../mcp-server
+      '@vitra/renderer':
+        specifier: workspace:*
+        version: link:../renderer
+      '@vitra/tokens':
+        specifier: workspace:*
+        version: link:../tokens
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+
   packages/cli:
     dependencies:
+      '@vitra/bench':
+        specifier: workspace:*
+        version: link:../bench
       '@vitra/codegen':
         specifier: workspace:*
         version: link:../codegen

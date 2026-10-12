@@ -43,6 +43,7 @@ Packages Layer
   @vitra/codegen     Transpilation engines: React + Tailwind, SwiftUI, HTML, SVG
   @vitra/sync        WebSocket binary/JSON-RPC sync server and OT protocol
   @vitra/mcp-server  Model Context Protocol server for AI agent integration
+  @vitra/bench       VitraBench agent evaluation harness over the MCP server
   @vitra/cli         Unified standalone binary and command-line runner
 
 Applications Layer

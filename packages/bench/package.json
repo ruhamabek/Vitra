@@ -1,0 +1,29 @@
+{
+  "name": "@vitra/bench",
+  "version": "0.1.0",
+  "description": "VitraBench: agent evaluation harness scoring MCP-driven design tasks on audit quality, visual similarity, and tool-call efficiency",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@vitra/core": "workspace:*",
+    "@vitra/layout": "workspace:*",
+    "@vitra/tokens": "workspace:*",
+    "@vitra/renderer": "workspace:*",
+    "@vitra/eval": "workspace:*",
+    "@vitra/mcp-server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.8"
+  }
+}

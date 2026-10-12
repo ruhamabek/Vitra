@@ -34,6 +34,7 @@ Vitra is an open-source, AI-native visual runtime, layout engine, and spatial ve
   - [Compilation & Code Generation](#compilation--code-generation)
   - [Platform Interoperability & Design Tokens](#platform-interoperability--design-tokens)
 - [Model Context Protocol (MCP) Integration](#model-context-protocol-mcp-integration)
+- [Agent Benchmark (VitraBench)](#agent-benchmark-vitrabench)
 - [Monorepo Structure](#monorepo-structure)
 - [Security & Licensing](#security--licensing)
 
@@ -379,6 +380,13 @@ Headless command-line rendering of an artboard or specific sub-tree to an image 
 vitra render my-app.vitra --out preview.png --scale 2 --node artboard-desktop
 ```
 
+#### `vitra bench`
+Run the VitraBench agent evaluation suite against the built-in tasks and print a scored report. See [Agent Benchmark (VitraBench)](#agent-benchmark-vitrabench).
+
+```bash
+vitra bench --agent anthropic --model <model-id> --out bench.json --min-score 80
+```
+
 ---
 
 ## Model Context Protocol (MCP) Integration
@@ -434,6 +442,31 @@ Or run directly via Node.js from source:
 
 ---
 
+## Agent Benchmark (VitraBench)
+
+`@vitra/bench` is an evaluation harness for agents that drive Vitra through its MCP tools. Each task gives an agent a natural-language brief and a starting scene, connects it to an in-process Vitra MCP server, records every tool call, and scores the final scene on four axes:
+
+| Axis | Source | Measures |
+|:---|:---|:---|
+| Functional | Task-specific checks | Whether the brief was satisfied (goal checks) without collateral damage (guard checks) |
+| Audit | `@vitra/eval` | WCAG contrast and layout overflow score of the target node |
+| Visual | `@vitra/renderer` + SSIM | Per-channel structural similarity of the rendered result to a reference render |
+| Efficiency | Tool-call log | Calls against a per-task budget, minus failed, no-op, and later-overwritten edits |
+
+Built-in tasks: `pricing-card` (compose a component), `responsive-mobile` (adapt a desktop layout to 375px), and `tokenize-colors` (migrate hardcoded colors to design tokens).
+
+```bash
+vitra bench --list
+vitra bench                                   # reference solutions (should score 100)
+ANTHROPIC_API_KEY=... vitra bench --agent anthropic --model <model-id> --verbose
+vitra bench --agent anthropic --task tokenize-colors --out bench.json --min-score 80
+vitra bench --agent anthropic --runs 5        # per-task mean and standard deviation
+```
+
+See [`packages/bench/README.md`](packages/bench/README.md) for the scoring model and for plugging in other agents.
+
+---
+
 ## Monorepo Structure
 
 ```text
@@ -444,6 +477,7 @@ Vitra/
 │   ├── launch-video/      Programmatic video generation engine
 │   └── penpot-plugin/     Bidirectional Penpot plugin client
 ├── packages/
+│   ├── bench/             VitraBench agent evaluation harness and task suite
 │   ├── cli/               Unified command-line interface binary
 │   ├── codegen/           React, SwiftUI, HTML, and SVG compilers
 │   ├── core/              Visual AST specification, DAG versioning, Git storage

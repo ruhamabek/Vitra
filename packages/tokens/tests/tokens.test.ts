@@ -119,4 +119,24 @@ describe('Design Tokens Engine', () => {
     expect(registry.resolveValue('#15171D')).toBe('#FFFFFF');
      expect(registry.resolveValue('#FF0000')).toBe('#FF0000');
   });
+
+  it('should expose a detached snapshot of base tokens, themes, and the active theme', () => {
+    const registry = new TokenRegistry();
+    registry.registerTokens({ colors: { surface: { $value: '#1E1E2E', $type: 'color' } } });
+    registry.registerTheme('light', { colors: { surface: '#FFFFFF' } });
+    registry.setTheme('light');
+
+    const snapshot = registry.snapshot();
+    expect(snapshot).toEqual({
+      base: { 'colors.surface': '#1E1E2E' },
+      themes: { light: { 'colors.surface': '#FFFFFF' } },
+      activeTheme: 'light',
+    });
+
+    snapshot.base['colors.surface'] = '#000000';
+    snapshot.themes.light!['colors.surface'] = '#000000';
+    expect(registry.resolve('colors.surface')).toBe('#FFFFFF');
+    registry.setTheme(null);
+    expect(registry.resolve('colors.surface')).toBe('#1E1E2E');
+  });
 });

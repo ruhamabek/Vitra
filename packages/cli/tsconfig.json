@@ -13,6 +13,7 @@
     { "path": "../codegen" },
     { "path": "../eval" },
     { "path": "../sync" },
-    { "path": "../mcp-server" }
+    { "path": "../mcp-server" },
+    { "path": "../bench" }
   ]
 }

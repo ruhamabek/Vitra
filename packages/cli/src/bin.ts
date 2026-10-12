@@ -23,6 +23,24 @@ import { runSpecCommand } from './commands/spec.js';
 import { runRenderCommand, formatRenderSummary } from './commands/render.js';
 import { importDesign, exportFigma, exportPenpot } from './commands/import.js';
 import { runMcpCommand } from './commands/mcp.js';
+import { runBenchCommand, formatBenchTaskList } from './commands/bench.js';
+import { formatBenchReport } from '@vitra/bench';
+
+/**
+ * Parses an optional integer CLI flag value, enforcing a lower bound.
+ *
+ * @returns undefined when the flag was not given.
+ * @throws Error naming the flag when the value is not an integer >= `min`.
+ */
+function parseIntFlag(flag: string, value: string | undefined, min: number): number | undefined {
+  if (value === undefined) return undefined;
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < min) {
+    const expected = min === 0 ? 'a non-negative integer' : `an integer of at least ${min}`;
+    throw new Error(`Option --${flag} expects ${expected} (got "${value}").`);
+  }
+  return parsed;
+}
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message;
@@ -61,6 +79,7 @@ const HELP_TEXT = `
     hash-object [-w] <file>    Compute SHA-1 hash and optionally create zlib object
     cat-file [<dir>] -p <sha>  Display decompressed object content or tree listing
     mcp [<dir>]                Start Model Context Protocol (MCP) server on stdio
+    bench                      Run the VitraBench agent evaluation suite [--agent oracle|anthropic] [--task <id>] [--runs <n>] [--json] [--out <f>] [--min-score <n>] [--list]
     
   Options:
     -h, --help                 Show this help message
@@ -783,6 +802,60 @@ async function main() {
           console.log(`\n📄 Exported design specification to: ${result.outFile}\n`);
         } else {
           console.log('\n' + result.markdown + '\n');
+        }
+        break;
+      }
+
+      case 'bench': {
+        const { values } = parseArgs({
+          args: args.slice(1),
+          options: {
+            agent: { type: 'string', short: 'a' },
+            task: { type: 'string', short: 't', multiple: true },
+            model: { type: 'string', short: 'm' },
+            'max-turns': { type: 'string' },
+            timeout: { type: 'string' },
+            runs: { type: 'string', short: 'r' },
+            out: { type: 'string', short: 'o' },
+            json: { type: 'boolean' },
+            verbose: { type: 'boolean' },
+            list: { type: 'boolean' },
+            'min-score': { type: 'string' },
+          },
+          allowPositionals: false,
+        });
+
+        if (values.list) {
+          console.log(formatBenchTaskList());
+          break;
+        }
+
+        const minScore = parseIntFlag('min-score', values['min-score'], 0);
+        const agentKind = values.agent ?? 'oracle';
+        if (agentKind !== 'oracle' && agentKind !== 'anthropic') {
+          throw new Error(`Unknown bench agent "${agentKind}". Expected one of: oracle, anthropic.`);
+        }
+        const { result, outFile } = await runBenchCommand({
+          agent: agentKind,
+          tasks: values.task,
+          model: values.model,
+          maxTurns: parseIntFlag('max-turns', values['max-turns'], 1),
+          timeoutMs: parseIntFlag('timeout', values.timeout, 0),
+          runs: parseIntFlag('runs', values.runs, 1),
+          out: values.out,
+        });
+
+        if (values.json) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          console.log(formatBenchReport(result, { verbose: values.verbose }));
+          if (outFile) {
+            console.log(`Report written to ${outFile}\n`);
+          }
+        }
+
+        if (minScore !== undefined && result.score < minScore) {
+          process.exit(1);
         }
         break;
       }
