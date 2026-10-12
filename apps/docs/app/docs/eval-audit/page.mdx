@@ -1,7 +1,7 @@
 ---
 order: 6
 title: Auditing & Headless Renderer
-description: Automated WCAG 2.1 AA/AAA contrast checks, layout overflow audits, and resvg-js PNG rendering.
+description: Automated WCAG 2.1 AA/AAA contrast checks, layout overflow audits, resvg-js PNG rendering, and VitraBench agent evaluation.
 icon: shield
 related:
   - /docs/getting-started
@@ -20,7 +20,7 @@ agent:
 
 # Auditing & Headless Renderer
 
-Engineering teams typically rely on manual QA or fragile end-to-end browser tests to detect accessibility issues and layout regressions. Vitra replaces this with **headless visual auditing** (`@vitra/eval`) and **headless graphics rendering** (`@vitra/renderer`).
+Engineering teams typically rely on manual QA or fragile end-to-end browser tests to detect accessibility issues and layout regressions. Vitra replaces this with **headless visual auditing** (`@vitra/eval`), **headless graphics rendering** (`@vitra/renderer`), and the **agent evaluation harness** (`@vitra/bench`).
 
 Both engines execute purely in Node.js and WebAssembly—requiring zero Chromium instances, zero Puppeteer scripts, and zero headless browser overhead.
 
@@ -141,8 +141,44 @@ Every `IconNode` is rendered directly into SVG paths using vector paths extracte
 
 ---
 
+## 4. Agent Evaluation & Benchmarking (`@vitra/bench`)
+
+While `@vitra/eval` provides accessibility audits and `@vitra/renderer` produces visual rasterization, `@vitra/bench` unifies them into an automated agent evaluation harness (`vitra bench`).
+
+VitraBench evaluates how effectively AI models navigate and mutate the design canvas using Vitra's MCP tools against standardized briefs.
+
+### 4-Dimensional Scoring Model
+
+Every benchmark run produces a weighted composite score (0–100):
+
+| Dimension | Weight | Evaluation Method |
+| :--- | :--- | :--- |
+| **Functional AST** | **40%** | Deterministic assertions over node hierarchies, auto-layout directions, text content, and sizing constraints. |
+| **Visual SSIM** | **30%** | Structural Similarity Index (SSIM) between headless PNG render and gold-standard reference image. |
+| **WCAG Audit** | **20%** | `@vitra/eval` contrast violation penalties and container overflow detection. |
+| **Tool Efficiency** | **10%** | Turn count budget, penalizing wasted, failing, or redundant mutations. |
+
+### Running the Suite
+
+```bash title="terminal"
+# List all registered tasks
+vitra bench --list
+
+# Run reference solutions (oracle agent)
+vitra bench
+
+# Benchmark an LLM agent
+ANTHROPIC_API_KEY=... vitra bench --agent anthropic --task pricing-card --runs 3
+
+# Automated CI quality gate
+vitra bench --task pricing-card --min-score 85
+```
+
+---
+
 ## Next Steps
 
+- [Complete CLI Reference (All 26 Commands)](/docs/cli)
 - [Multi-Target Code Compilation & Sync Server](/docs/codegen)
-- [Complete CLI Reference](/docs/cli)
 - [Model Context Protocol & Agent Skills](/docs/mcp)
+

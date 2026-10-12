@@ -1,7 +1,7 @@
 ---
 order: 8
 title: Command Line Reference
-description: Complete specification of all 24 Vitra CLI commands, parameters, flags, and outputs.
+description: Complete specification of all 26 Vitra CLI commands, parameters, flags, and outputs.
 icon: terminal
 related:
   - /docs/getting-started
@@ -16,7 +16,7 @@ agent:
 
 # Command Line Reference
 
-The Vitra CLI (`vitra`) provides 25 deterministic commands covering project lifecycle, visual version control, headless audits, declarative specification compilation, and bi-directional design synchronization.
+The Vitra CLI (`vitra`) provides 26 deterministic commands covering project lifecycle, visual version control, headless audits, agent evaluation, declarative specification compilation, and bi-directional design synchronization.
 
 ```bash title="Command Synopsis"
 vitra <command> [options]
@@ -40,6 +40,7 @@ vitra <command> [options]
 | **`log`** | Display visual commit DAG history |
 | **`diff`** | Display visual AST diff between working tree, commits, or projects |
 | **`audit`** | Run headless WCAG contrast & boundary overflow accessibility audit |
+| **`bench`** | Run VitraBench agent evaluation suite against standardized UI tasks |
 | **`apply`** | Atomically patch declarative component (`.json` or `design.md`) |
 | **`spec`** | Export UI tree to compact declarative `design.md` spec |
 | **`render`** | Render artboard or node directly to PNG image via resvg |
@@ -361,8 +362,54 @@ Decompress and print contents of a loose object by SHA-1 hash.
 
 ---
 
+## 7. Agent Evaluation & Benchmarking
+
+### `vitra bench`
+Run the VitraBench evaluation suite to measure agent design capabilities against standardized UI tasks across functional AST correctness, visual raster SSIM, WCAG accessibility, and tool efficiency.
+
+- **Syntax**: `vitra bench [--list] [--task <id...>] [--agent oracle|anthropic] [--model <id>] [--runs <n>] [--min-score <n>] [--out <file>] [--json]`
+
+#### Flags & Parameters
+
+| Flag | Description | Default |
+| :--- | :--- | :--- |
+| `--list` | List all available benchmark tasks and exit | `false` |
+| `--task, -t <id>` | Run specific task ID(s). Repeatable (e.g. `-t pricing-card -t tokenize-colors`). | All tasks |
+| `--agent, -a <name>` | Agent harness adapter: `oracle` (deterministic reference) or `anthropic` (live LLM loop). | `oracle` |
+| `--model, -m <id>` | Model identifier passed to the LLM agent adapter (e.g. `claude-3-5-sonnet-20241022`). | Default Anthropic model |
+| `--min-score <n>` | Minimum average score threshold (0–100) for CI/CD gates; exits with a non-zero code if unmet. | `0` |
+| `--runs, -r <n>` | Iterations per task for statistical variance and pass@k evaluation. | `1` |
+| `--max-turns <n>` | Maximum tool turns permitted per task attempt. | `20` |
+| `--timeout <ms>` | Maximum execution duration in milliseconds. | `120000` |
+| `--out, -o <file>` | Path to persist the comprehensive evaluation scorecard JSON file. | None |
+| `--json` | Print the final evaluated scorecard as formatted JSON to stdout. | `false` |
+| `--verbose` | Output tool-by-tool reasoning trace and real-time execution logs. | `false` |
+
+#### Examples
+
+```bash title="terminal"
+# List all registered benchmark tasks
+vitra bench --list
+
+# Run reference solutions (oracle agent)
+vitra bench
+
+# Run a specific task with reference validation
+vitra bench --task pricing-card
+
+# CI / CD quality gate: fail build if mean score < 85
+vitra bench --task pricing-card --min-score 85
+
+# Benchmark an Anthropic agent over 3 runs and save report
+ANTHROPIC_API_KEY=... vitra bench --agent anthropic --task pricing-card --runs 3 --out report.json
+```
+
+---
+
 ## Next Steps
 
+- [Headless Rendering & Accessibility Audits](/docs/eval-audit)
 - [Model Context Protocol (MCP) & Agent Skills](/docs/mcp)
 - [Visual AST Deep Dive](/docs/visual-ast)
 - [AI Agent Setup Guide](/docs/agent-setup)
+
