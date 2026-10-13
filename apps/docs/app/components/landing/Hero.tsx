@@ -38,7 +38,7 @@ export const Hero: React.FC = () => {
           className="liquid-glass inline-flex items-center gap-2 px-3 py-2 rounded-lg mb-6"
         >
           <span className="bg-foreground text-background rounded-md text-sm font-medium px-2 py-0.5">New</span>
-          <span className="text-sm font-medium text-muted-foreground">Say hello to Vitra Engine v0.1</span>
+          <span className="text-sm font-medium text-muted-foreground">Say hello to Vitra Engine v0.2.4</span>
         </motion.div>
 
         <motion.h1
