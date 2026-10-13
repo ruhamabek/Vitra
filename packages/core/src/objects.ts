@@ -131,9 +131,7 @@ export async function writeTreeFromStore(dirPath: string, store: InMemorySceneSt
 
     const children = store.getChildren(nodeId);
 
-     const propsWithoutChildren: Record<string, unknown> = { ...(node as Record<string, unknown>) };
-    delete propsWithoutChildren['childIds'];
-    const selfPropsBuffer = Buffer.from(deterministicStringify(propsWithoutChildren), 'utf-8');
+     const selfPropsBuffer = Buffer.from(deterministicStringify(node), 'utf-8');
     const selfBlobSha = await writeGitObject(dirPath, 'blob', selfPropsBuffer);
 
     if (children.length === 0 && node.type !== 'document') {
@@ -194,11 +192,27 @@ export async function restoreStoreFromTree(dirPath: string, rootTreeSha: string)
       const selfProps = JSON.parse(selfObj.content.toString('utf-8'));
 
       const childEntries = entries.filter((e) => e.name !== '.self');
-      const childIds: string[] = [];
+      const restoredChildrenMap = new Map<string, SceneNode>();
 
       for (const childEntry of childEntries) {
         const childNode = await restoreNode(childEntry.sha, selfProps.id);
-        childIds.push(childNode.id);
+        restoredChildrenMap.set(childNode.id, childNode);
+      }
+
+       let childIds: string[] = [];
+      if (Array.isArray(selfProps.childIds) && selfProps.childIds.length > 0) {
+        for (const id of selfProps.childIds) {
+          if (restoredChildrenMap.has(id)) {
+            childIds.push(id);
+          }
+        }
+        for (const id of restoredChildrenMap.keys()) {
+          if (!childIds.includes(id)) {
+            childIds.push(id);
+          }
+        }
+      } else {
+        childIds = Array.from(restoredChildrenMap.keys());
       }
 
       const node: SceneNode = {

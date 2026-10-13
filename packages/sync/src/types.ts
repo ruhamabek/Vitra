@@ -38,7 +38,7 @@ export type SyncMessage =
   | { type: 'checkout_commit'; commitId: string }
   | { type: 'restore_head' }
   | { type: 'git_diff_request'; commitA?: string; commitB?: string }
-  | { type: 'git_diff_response'; added: string[]; modified: string[]; deleted: string[] }
+  | { type: 'git_diff_response'; added: string[]; modified: string[]; deleted: string[]; title?: string }
   | { type: 'import_figma'; json: string }
   | { type: 'import_penpot'; json: string };
 

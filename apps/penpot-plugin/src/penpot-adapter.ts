@@ -1,6 +1,8 @@
 import type {
   AutoLayout,
+  PenpotShape,
 } from '@vitra/core';
+import type { PenpotNativeShape, PenpotPluginApi } from './types.js';
 
 export interface PenpotFlexProps {
   layout: 'flex';
@@ -105,5 +107,156 @@ export function mapVitraSizingToPenpot(
   }
 
   return { horizontalSizing, verticalSizing };
+}
+
+declare const penpot: PenpotPluginApi | undefined;
+
+export function getPageTopLevelShapes(api?: Partial<PenpotPluginApi>): PenpotNativeShape[] {
+  try {
+    const penpotInstance = api ?? (typeof penpot !== 'undefined' ? penpot : undefined);
+    if (!penpotInstance) return [];
+
+    const page = penpotInstance.currentPage;
+
+     const root = page?.root || penpotInstance.root;
+    if (root && Array.isArray(root.children) && root.children.length > 0) {
+      return root.children;
+    }
+
+     if (page && Array.isArray(page.children) && page.children.length > 0) {
+      return page.children;
+    }
+
+     if (typeof page?.findShapes === 'function') {
+      try {
+        const boards = page.findShapes({ type: 'board' });
+        if (Array.isArray(boards) && boards.length > 0) {
+          return boards;
+        }
+      } catch {}
+
+      try {
+        const allShapes = page.findShapes();
+        if (Array.isArray(allShapes) && allShapes.length > 0) {
+          const topLevel = allShapes.filter(
+            (s: PenpotNativeShape) =>
+              !s.parent || s.parent === root || s.parent?.id === root?.id || s.parent?.type === 'root'
+          );
+          if (topLevel.length > 0) return topLevel;
+          const boards = allShapes.filter((s: PenpotNativeShape) => s && s.type === 'board');
+          if (boards.length > 0) return boards;
+          return allShapes;
+        }
+      } catch {}
+    }
+
+     if (page && Array.isArray(page.shapes) && page.shapes.length > 0) {
+      return page.shapes;
+    }
+  } catch (err) {
+    console.warn('[Vitra] Error retrieving Penpot page shapes:', err);
+  }
+
+  return [];
+}
+
+export function serializePenpotShape(shape: PenpotNativeShape, isTopLevel = false): PenpotShape {
+  const childrenSerialized = shape.children
+    ? shape.children.map((c: PenpotNativeShape) => serializePenpotShape(c, false))
+    : shape.shapes
+    ? shape.shapes.map((c: PenpotNativeShape) => serializePenpotShape(c, false))
+    : undefined;
+
+  const flexObj = (shape as unknown as { flex?: Record<string, unknown>; layoutFlex?: Record<string, unknown> }).flex
+    || (shape as unknown as { flex?: Record<string, unknown>; layoutFlex?: Record<string, unknown> }).layoutFlex
+    || {};
+  const layoutChild = shape.layoutChild || (shape as unknown as { layoutChild?: Record<string, unknown> }).layoutChild || {};
+
+  const rawDir =
+    shape.flexDirection ||
+    (flexObj.dir as string | undefined) ||
+    (flexObj.flexDirection as string | undefined) ||
+    (shape as unknown as { dir?: string }).dir;
+
+  const flexDir =
+    rawDir === 'column' || rawDir === 'vertical' || rawDir === 'column-reverse'
+      ? 'column'
+      : rawDir === 'row' || rawDir === 'horizontal' || rawDir === 'row-reverse'
+      ? 'row'
+      : undefined;
+
+  const isFlex =
+    shape.layout === 'flex' ||
+    Boolean(flexObj.dir) ||
+    Boolean(shape.flexDirection) ||
+    Boolean((shape as unknown as { dir?: string }).dir);
+
+  const rowGap = shape.rowGap ?? (flexObj.rowGap as number | undefined) ?? (flexObj.gap as number | undefined);
+  const colGap = shape.columnGap ?? (flexObj.columnGap as number | undefined) ?? (flexObj.gap as number | undefined);
+  const alignItems = shape.alignItems || (flexObj.alignItems as string | undefined);
+  const justifyContent = shape.justifyContent || (flexObj.justifyContent as string | undefined);
+
+  const padTop = shape.padding?.top ?? (flexObj.topPadding as number | undefined) ?? (flexObj.verticalPadding as number | undefined);
+  const padRight = shape.padding?.right ?? (flexObj.rightPadding as number | undefined) ?? (flexObj.horizontalPadding as number | undefined);
+  const padBottom = shape.padding?.bottom ?? (flexObj.bottomPadding as number | undefined) ?? (flexObj.verticalPadding as number | undefined);
+  const padLeft = shape.padding?.left ?? (flexObj.leftPadding as number | undefined) ?? (flexObj.horizontalPadding as number | undefined);
+
+  const padding = (padTop || padRight || padBottom || padLeft)
+    ? { top: padTop || 0, right: padRight || 0, bottom: padBottom || 0, left: padLeft || 0 }
+    : shape.padding;
+
+  const sizingH = layoutChild.horizontalSizing || (shape as unknown as { sizingHorizontal?: string }).sizingHorizontal;
+  const sizingV = layoutChild.verticalSizing || (shape as unknown as { sizingVertical?: string }).sizingVertical;
+
+  const sizingHorizontal =
+    sizingH === 'fill' ? 'fill' : sizingH === 'auto' ? 'hug' : sizingH === 'fix' ? 'fixed' : undefined;
+  const sizingVertical =
+    sizingV === 'fill' ? 'fill' : sizingV === 'auto' ? 'hug' : sizingV === 'fix' ? 'fixed' : undefined;
+
+  const fill =
+    shape.fills?.[0]?.fillColor ||
+    shape.fills?.[0]?.color ||
+    shape.fillColor ||
+    shape.fill;
+
+  const stroke =
+    shape.strokes?.[0]?.strokeColor ||
+    shape.strokes?.[0]?.color ||
+    shape.strokeColor ||
+    shape.stroke;
+
+  const strokeW =
+    shape.strokes?.[0]?.strokeWidth ||
+    shape.strokes?.[0]?.width ||
+    shape.strokeWidth;
+
+  const shapeType = !isTopLevel && shape.type === 'board' ? 'frame' : shape.type;
+
+  return {
+    id: shape.id,
+    name: shape.name,
+    type: shapeType,
+    x: shape.x || 0,
+    y: shape.y || 0,
+    width: shape.width || 100,
+    height: shape.height || 100,
+    fillColor: fill,
+    strokeColor: stroke,
+    strokeWidth: strokeW,
+    borderRadius: shape.borderRadius,
+    layout: isFlex ? 'flex' : undefined,
+    flexDirection: flexDir,
+    rowGap,
+    columnGap: colGap,
+    alignItems: alignItems as 'start' | 'center' | 'end' | 'stretch' | undefined,
+    justifyContent: justifyContent as 'start' | 'center' | 'end' | 'space-between' | undefined,
+    padding,
+    sizingHorizontal,
+    sizingVertical,
+    characters: shape.characters || shape.text || shape.content,
+    fontSize: typeof shape.fontSize === 'number' ? shape.fontSize : undefined,
+    children: childrenSerialized,
+    shapes: childrenSerialized,
+  };
 }
 

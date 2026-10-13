@@ -34,8 +34,8 @@ export interface PenpotShape {
   layout?: 'flex' | 'grid' | 'none';
   layoutAlign?: 'stretch' | 'start' | 'center' | 'end';
   layoutGrow?: number;
-  sizingHorizontal?: 'fixed' | 'hug' | 'fill';
-  sizingVertical?: 'fixed' | 'hug' | 'fill';
+  sizingHorizontal?: 'fixed' | 'hug' | 'fill' | 'auto' | 'fix';
+  sizingVertical?: 'fixed' | 'hug' | 'fill' | 'auto' | 'fix';
   rowGap?: number;
   columnGap?: number;
   gap?: number;
@@ -154,9 +154,11 @@ export function convertPenpotJsonToVitra(
         }
       : undefined;
 
-    const children = shape.shapes || shape.children || [];
+    const rawChildren = shape.shapes || shape.children || [];
+   
+    const children = isTopLevel ? rawChildren : [...rawChildren].reverse();
 
-    if (isTopLevel || type === 'board') {
+    if (isTopLevel) {
       const artboardWidth = width || 1440;
       const preset = artboardWidth <= 500 ? 'mobile' : artboardWidth >= 1200 ? 'desktop' : 'tablet';
       const artboard = createArtboardNode({
@@ -182,16 +184,20 @@ export function convertPenpotJsonToVitra(
       for (const child of children) {
         processPenpotShape(child, artboard.id, false);
       }
-    } else if (type === 'frame' || type === 'group' || children.length > 0) {
+    } else if (type === 'frame' || type === 'board' || type === 'group' || children.length > 0) {
       const sizingHorizontal =
         shape.layoutAlign === 'stretch' || shape.sizingHorizontal === 'fill'
           ? 'fill'
+          : shape.sizingHorizontal === 'hug' || shape.sizingHorizontal === 'auto'
+          ? 'hug'
           : shape.width
           ? 'fixed'
           : 'hug';
       const sizingVertical =
         shape.layoutGrow === 1 || shape.sizingVertical === 'fill'
           ? 'fill'
+          : shape.sizingVertical === 'hug' || shape.sizingVertical === 'auto'
+          ? 'hug'
           : shape.height
           ? 'fixed'
           : 'hug';
@@ -230,14 +236,18 @@ export function convertPenpotJsonToVitra(
         wrap: Boolean(shape.wrap || textContent.length > 35),
       });
       store.insertNode(textNode, parentId);
-    } else if (type === 'rect' || type === 'circle' || type === 'path' || type === 'shape') {
+    } else if (type === 'rect' || type === 'circle' || type === 'ellipse' || type === 'path' || type === 'shape' || type === 'svg') {
+      const isEllipse = type === 'circle' || type === 'ellipse' || shape.borderRadius === (width ? width / 2 : undefined);
+      const shapeType = isEllipse ? 'ellipse' : 'rectangle';
+      // For stroke-only shapes (such as outline icons or borders), preserve transparent fill
+      const resolvedFill = fill || (stroke ? 'none' : '#89B4FA');
       const shapeNode = createShapeNode({
         id: shape.id || `shape-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
         name: shape.name || type,
-        shapeType: type === 'circle' ? 'ellipse' : 'rectangle',
+        shapeType,
         width: width ?? 100,
         height: height ?? 100,
-        fill: fill || '#89B4FA',
+        fill: resolvedFill,
         stroke,
         strokeWidth,
         cornerRadius,
@@ -249,7 +259,8 @@ export function convertPenpotJsonToVitra(
   for (const page of pages) {
     const pageObj = page as { shapes?: PenpotShape[]; children?: PenpotShape[] } & PenpotShape;
     const shapes = pageObj?.shapes || pageObj?.children || (pageObj?.type ? [pageObj] : []);
-    for (const shape of shapes) {
+    const sortedShapes = [...shapes].sort((a, b) => (a.x ?? 0) - (b.x ?? 0));
+    for (const shape of sortedShapes) {
       processPenpotShape(shape, 'root', true);
     }
   }

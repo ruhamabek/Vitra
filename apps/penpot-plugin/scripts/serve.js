@@ -44,10 +44,10 @@ const server = http.createServer((req, res) => {
   const origin = req.headers.origin;
 
 
-  if (origin && isAllowedOrigin(origin)) {
+  if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
     res.setHeader('Vary', 'Origin');
-  } else if (!origin) {
+  } else {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
 
@@ -87,28 +87,22 @@ const server = http.createServer((req, res) => {
   fs.createReadStream(resolvedPath).pipe(res);
 });
 
-const HOST = '127.0.0.1';
-
-server.listen(port, HOST, () => {
+server.listen(port, () => {
   console.log(`\n⚡ Vitra Penpot Plugin Server running at:`);
-  console.log(`   ➜  Plugin URL:  http://${HOST}:${port}/manifest.json`);
-  console.log(`   ➜  Plugin JS:   http://${HOST}:${port}/plugin.js`);
-  console.log(`   ➜  Plugin UI:   http://${HOST}:${port}/index.html`);
-  console.log(`   ➜  Network:     Bound to loopback (${HOST})`);
-  console.log(`   ➜  CORS:        Scoped to Penpot & Localhost origins\n`);
+  console.log(`   ➜  Plugin URL:  http://localhost:${port}/manifest.json (and http://127.0.0.1:${port}/manifest.json)`);
+  console.log(`   ➜  Plugin JS:   http://localhost:${port}/plugin.js`);
+  console.log(`   ➜  Plugin UI:   http://localhost:${port}/index.html\n`);
   console.log(`  In Penpot Web (design.penpot.app):`);
   console.log(`   1. Press Ctrl + Alt + P (or click Menu -> Plugins Manager)`);
-  console.log(`   2. In the modal, paste: http://${HOST}:${port}/manifest.json`);
+  console.log(`   2. In the modal, paste: http://localhost:${port}/manifest.json`);
   console.log(`   3. Click Install and launch the plugin!\n`);
 });
 
-if (port === 4400) {
-  const fallbackServer = http.createServer((req, res) => {
-
-    server.emit('request', req, res);
-  });
-  fallbackServer.on('error', () => {});
-  fallbackServer.listen(4000, HOST, () => {
-    console.log(`   (Also listening on fallback port: http://${HOST}:4000/manifest.json)`);
-  });
-}
+const otherPort = port === 4400 ? 4000 : 4400;
+const fallbackServer = http.createServer((req, res) => {
+  server.emit('request', req, res);
+});
+fallbackServer.on('error', () => {});
+fallbackServer.listen(otherPort, () => {
+  console.log(`   (Also listening on dual port: http://localhost:${otherPort}/manifest.json)`);
+});

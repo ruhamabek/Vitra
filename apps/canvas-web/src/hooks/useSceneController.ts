@@ -183,6 +183,28 @@ export function useSceneController({
     [updateLayouts]
   );
 
+  const handleInsertNode = useCallback(
+    (node: SceneNode, parentId: string, index?: number) => {
+      if (!storeRef.current) return;
+      try {
+        storeRef.current.insertNode(node, parentId, index);
+        triggerStoreUpdate(storeRef.current);
+
+        sendWsMutation({
+          type: 'insert',
+          nodeId: node.id,
+          parentId,
+          node,
+        });
+        addActivityEvent(`You added ${node.type} "${node.id}"`);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.warn('[handleInsertNode] Failed:', msg);
+      }
+    },
+    [triggerStoreUpdate, sendWsMutation, addActivityEvent]
+  );
+
   const handleUpdateNode = useCallback(
     (nodeId: string, patch: Partial<SceneNode>) => {
       if (!storeRef.current) return;
@@ -257,7 +279,13 @@ export function useSceneController({
       editingNodeId,
       editingText,
       getZoomLevel: () => editorRef.current?.getZoomLevel() ?? 1,
-      onSelectNode: (id) => setSelectedNodeId(id),
+      onSelectNode: (id) => {
+        const editor = editorRef.current;
+        if (editor?.getEditingShapeId()) {
+          editor.setEditingShape(null);
+        }
+        setSelectedNodeId(id);
+      },
       onStartEditText: (id, initialText) => {
         setEditingNodeId(id);
         setEditingText(initialText);
@@ -300,6 +328,7 @@ export function useSceneController({
     totalLayersCount,
     updateLayouts,
     triggerStoreUpdate,
+    handleInsertNode,
     handleUpdateNode,
     handleDeleteNode,
     handleMoveNode,

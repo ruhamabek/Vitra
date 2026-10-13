@@ -110,18 +110,29 @@ function toggleConnect() {
 
 let snapshotApplyTimer = null;
 let mutationDebounceTimer = null;
+let isPushing = false;
+let isPullRequested = false;
 
 function handleServerMessage(data) {
   if (data.type === 'snapshot') {
     lastSnapshot = data;
     const count = Object.keys(data.nodes || {}).length;
-    if (snapshotApplyTimer) clearTimeout(snapshotApplyTimer);
-    snapshotApplyTimer = setTimeout(() => {
-      log(`Received snapshot with ${count} nodes.`, 'info');
-      log('Applying snapshot to Penpot...', 'info');
-      parent.postMessage({ type: 'APPLY_SNAPSHOT', root: data.root, nodes: data.nodes }, '*');
-      snapshotApplyTimer = null;
-    }, 50);
+
+    if (isPushing) {
+      isPushing = false;
+      log(`Synced snapshot with Vitra (${count} nodes).`, 'success');
+    } else if (isPullRequested || (liveToggle && liveToggle.checked)) {
+      isPullRequested = false;
+      if (snapshotApplyTimer) clearTimeout(snapshotApplyTimer);
+      snapshotApplyTimer = setTimeout(() => {
+        log(`Received snapshot with ${count} nodes.`, 'info');
+        log('Applying snapshot to Penpot...', 'info');
+        parent.postMessage({ type: 'APPLY_SNAPSHOT', root: data.root, nodes: data.nodes }, '*');
+        snapshotApplyTimer = null;
+      }, 50);
+    } else {
+      log(`Cached snapshot with ${count} nodes.`, 'info');
+    }
 
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'git_status_request' }));
@@ -131,7 +142,7 @@ function handleServerMessage(data) {
     renderGitStatus(data);
   } else if (data.type === 'event' || data.type === 'mutation') {
     log(`Mutation: ${data.event?.type}`, 'info');
-    if (liveToggle.checked && ws && ws.readyState === WebSocket.OPEN) {
+    if (liveToggle && liveToggle.checked && ws && ws.readyState === WebSocket.OPEN) {
       if (mutationDebounceTimer) clearTimeout(mutationDebounceTimer);
       mutationDebounceTimer = setTimeout(() => {
         ws.send(JSON.stringify({ type: 'get_snapshot' }));
@@ -222,6 +233,7 @@ function escapeHtml(str) {
 
 function pullFromVitra() {
   if (ws && ws.readyState === WebSocket.OPEN) {
+    isPullRequested = true;
     log('Requesting snapshot from server...', 'info');
     ws.send(JSON.stringify({ type: 'get_snapshot' }));
     ws.send(JSON.stringify({ type: 'git_status_request' }));
@@ -234,11 +246,13 @@ function pullFromVitra() {
 }
 
 function pushSelection() {
+  isPushing = true;
   log('Requesting Penpot selection export...', 'info');
   parent.postMessage({ type: 'REQUEST_PUSH_SELECTION' }, '*');
 }
 
 function pushAll() {
+  isPushing = true;
   log('Requesting full Penpot page export...', 'info');
   parent.postMessage({ type: 'REQUEST_PUSH_ALL' }, '*');
 }

@@ -5,6 +5,7 @@ import {
   checkoutRef,
   loadCommitSnapshot,
   diffProjectCommits,
+  computeSceneDiff,
   InMemorySceneStore,
   type ISceneStore,
 } from '@vitra/core';
@@ -105,19 +106,49 @@ export async function handleGitMessage(
 
   if (msg.type === 'git_diff_request') {
     try {
-      const result = await diffProjectCommits(projectPath, {
-        between: msg.commitA && msg.commitB ? `${msg.commitA}..${msg.commitB}` : undefined,
-      });
-      const diff = result.diff;
+      if (msg.commitA && msg.commitB) {
+        const result = await diffProjectCommits(projectPath, {
+          between: `${msg.commitA}..${msg.commitB}`,
+        });
+        const diff = result.diff;
+        sendMessage({
+          type: 'git_diff_response',
+          added: diff.addedNodes.map((n) => n.nodeId),
+          modified: diff.modifiedNodes.map((n) => n.nodeId),
+          deleted: diff.deletedNodes.map((n) => n.nodeId),
+          title: result.title,
+        });
+        return;
+      }
+
+       const headInfo = await resolveHead(projectPath);
+      const headCommitId = headInfo.commitId;
+      if (!headCommitId) {
+        sendMessage({ type: 'git_diff_response', added: [], modified: [], deleted: [] });
+        return;
+      }
+
+      const headSnapshot = await loadCommitSnapshot(projectPath, headCommitId);
+      if (!headSnapshot) {
+        sendMessage({ type: 'git_diff_response', added: [], modified: [], deleted: [] });
+        return;
+      }
+
+      const headStore = InMemorySceneStore.fromSnapshot(headSnapshot);
+      const liveStore = (context.getStore() as InMemorySceneStore) || (await loadVitraProject(projectPath)).store;
+      const diff = computeSceneDiff(headStore, liveStore);
+
       sendMessage({
         type: 'git_diff_response',
         added: diff.addedNodes.map((n) => n.nodeId),
         modified: diff.modifiedNodes.map((n) => n.nodeId),
         deleted: diff.deletedNodes.map((n) => n.nodeId),
+        title: `Visual Diff: Canvas vs HEAD (${headCommitId})`,
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('[SyncServer] git_diff_request error:', message);
     }
+    return;
   }
 }

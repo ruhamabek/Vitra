@@ -4,6 +4,8 @@ import {
   mapVitraFillsToPenpot,
   mapVitraStrokesToPenpot,
   mapVitraSizingToPenpot,
+  getPageTopLevelShapes,
+  serializePenpotShape,
 } from '../src/penpot-adapter.js';
 
 describe('Penpot Adapter', () => {
@@ -79,6 +81,69 @@ describe('Penpot Adapter', () => {
       horizontalSizing: 'fill',
       verticalSizing: 'auto',
     });
+  });
+
+  it('retrieves top-level shapes from Penpot currentPage.root.children', () => {
+    const mockBoard = { id: 'board-1', name: 'Desktop Preview', type: 'board' };
+    const mockPenpot = {
+      currentPage: {
+        id: 'page-1',
+        name: 'Page 1',
+        root: {
+          id: 'root-shape',
+          children: [mockBoard],
+        },
+      },
+    };
+
+    const shapes = getPageTopLevelShapes(mockPenpot as any);
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].name).toBe('Desktop Preview');
+  });
+
+  it('falls back to findShapes when root.children is empty', () => {
+    const mockBoard = { id: 'board-mobile', name: 'Mobile Preview', type: 'board' };
+    const mockPenpot = {
+      currentPage: {
+        id: 'page-2',
+        findShapes: (criteria?: any) => {
+          if (criteria?.type === 'board') return [mockBoard];
+          return [mockBoard];
+        },
+      },
+    };
+
+    const shapes = getPageTopLevelShapes(mockPenpot as any);
+    expect(shapes).toHaveLength(1);
+    expect(shapes[0].id).toBe('board-mobile');
+  });
+
+  it('serializes Penpot native shapes with children, shapes, and color fallbacks', () => {
+    const nativeBoard = {
+      id: 'board-hero',
+      name: 'Hero Section',
+      type: 'board',
+      width: 1440,
+      height: 900,
+      fills: [{ fillColor: '#0F172A' }],
+      children: [
+        {
+          id: 'title-node',
+          name: 'Title',
+          type: 'text',
+          characters: 'Build Fast',
+          fontSize: 32,
+          fills: [{ fillColor: '#FFFFFF' }],
+        },
+      ],
+    };
+
+    const serialized = serializePenpotShape(nativeBoard as any);
+    expect(serialized.id).toBe('board-hero');
+    expect(serialized.fillColor).toBe('#0F172A');
+    expect(serialized.children).toHaveLength(1);
+    expect(serialized.shapes).toHaveLength(1);
+    expect(serialized.children?.[0].characters).toBe('Build Fast');
   });
 });
 

@@ -145,6 +145,17 @@ export class SyncServer implements SyncServerContext {
               const parsed = JSON.parse(msg.json);
               const converted = convertFigmaJsonToVitra(parsed);
               this.setStore(converted.store);
+              const root = converted.store.getRoot();
+              if (options.onUserEdit && root) {
+                options.onUserEdit({
+                  id: Math.random().toString(36).substring(2, 9),
+                  timestamp: Date.now(),
+                  nodeId: root.id,
+                  eventType: 'insert',
+                  details: 'Imported scene from Figma',
+                  event: { type: 'insert', nodeId: root.id, parentId: '', node: root },
+                });
+              }
             } catch (err: unknown) {
               const message = err instanceof Error ? err.message : String(err);
               console.error('[SyncServer] import_figma error:', message);
@@ -159,6 +170,16 @@ export class SyncServer implements SyncServerContext {
               const root = converted.store.getRoot();
               if (root && root.childIds && root.childIds.length > 0) {
                 this.setStore(converted.store);
+                if (options.onUserEdit) {
+                  options.onUserEdit({
+                    id: Math.random().toString(36).substring(2, 9),
+                    timestamp: Date.now(),
+                    nodeId: root.id,
+                    eventType: 'insert',
+                    details: 'Imported scene from Penpot',
+                    event: { type: 'insert', nodeId: root.id, parentId: '', node: root },
+                  });
+                }
               } else {
                 console.warn('[SyncServer] Ignored empty Penpot import to protect canvas data');
               }

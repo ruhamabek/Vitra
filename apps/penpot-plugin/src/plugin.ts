@@ -3,6 +3,8 @@ import type { SceneNode as VitraNode, DocumentNode as VitraDocNode, PenpotShape 
 import {
   mapVitraLayoutToPenpot,
   mapVitraSizingToPenpot,
+  getPageTopLevelShapes,
+  serializePenpotShape,
 } from './penpot-adapter.js';
 import { getSvgForIcon } from './icons.js';
 import type { UiToPenpotMessage, PenpotPluginApi, PenpotNativeShape } from './types.js';
@@ -172,7 +174,7 @@ function estimateNodeWidth(node: VitraNode, allNodes: Record<string, VitraNode>,
   }
 
    try {
-    const existingShapes = penpot.currentPage?.shapes || [];
+    const existingShapes = getPageTopLevelShapes();
     for (const s of existingShapes) {
       if (s.type === 'board' && typeof s.remove === 'function') {
         try { s.remove(); } catch {}
@@ -412,31 +414,7 @@ async function renderVitraNode(node: VitraNode, allNodes: Record<string, VitraNo
   }
 }
 
-function serializePenpotShape(shape: PenpotNativeShape): PenpotShape {
-  return {
-    id: shape.id,
-    name: shape.name,
-    type: shape.type,
-    x: shape.x || 0,
-    y: shape.y || 0,
-    width: shape.width || 100,
-    height: shape.height || 100,
-    fillColor: shape.fills?.[0]?.fillColor,
-    strokeColor: shape.strokes?.[0]?.strokeColor,
-    strokeWidth: shape.strokes?.[0]?.strokeWidth,
-    borderRadius: shape.borderRadius,
-    layout: shape.layout as 'flex' | 'grid' | 'none' | undefined,
-    flexDirection: shape.flexDirection as 'column' | 'row' | 'vertical' | 'horizontal' | undefined,
-    rowGap: shape.rowGap,
-    columnGap: shape.columnGap,
-    alignItems: shape.alignItems as 'start' | 'center' | 'end' | 'stretch' | undefined,
-    justifyContent: shape.justifyContent as 'start' | 'center' | 'end' | 'space-between' | undefined,
-    padding: shape.padding,
-    characters: shape.characters || shape.text,
-    fontSize: typeof shape.fontSize === 'number' ? shape.fontSize : undefined,
-    children: shape.children ? shape.children.map((c) => serializePenpotShape(c)) : undefined,
-  };
-}
+
 
 // Handle messages from the UI iframe
 async function handleMessage(msg: UiToPenpotMessage) {
@@ -464,12 +442,12 @@ async function handleMessage(msg: UiToPenpotMessage) {
           return;
         }
 
-        const serialized = selection.map((s) => serializePenpotShape(s));
+        const serialized = selection.map((s) => serializePenpotShape(s, s.type === 'board'));
         penpot.ui.sendMessage({
           type: 'SELECTION_SERIALIZED',
           penpotJson: {
             name: 'Penpot Selection Export',
-            pages: [{ id: 'page-1', name: 'Selection', shapes: serialized }],
+            pages: [{ id: 'page-1', name: 'Selection', shapes: serialized, children: serialized }],
           },
         });
         break;
@@ -477,7 +455,8 @@ async function handleMessage(msg: UiToPenpotMessage) {
 
       case 'REQUEST_PUSH_ALL': {
         const currentPage = penpot.currentPage;
-        const shapes = (currentPage?.shapes || []).map((s) => serializePenpotShape(s));
+        const topShapes = getPageTopLevelShapes();
+        const shapes = topShapes.map((s) => serializePenpotShape(s, true));
         if (shapes.length === 0) {
           penpot.ui.sendMessage({
             type: 'ERROR',
@@ -489,7 +468,7 @@ async function handleMessage(msg: UiToPenpotMessage) {
           type: 'SELECTION_SERIALIZED',
           penpotJson: {
             name: 'Penpot Page Export',
-            pages: [{ id: currentPage?.id || 'page-1', name: currentPage?.name || 'Page 1', shapes }],
+            pages: [{ id: currentPage?.id || 'page-1', name: currentPage?.name || 'Page 1', shapes, children: shapes }],
           },
         });
         break;

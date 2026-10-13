@@ -7,6 +7,7 @@ import { VitraArtboardShapeUtil } from './shapes/VitraArtboardShape.js';
 import { ActivityEvent, SyncMessage } from './types.js';
 import { useVitraSync } from './hooks/useVitraSync.js';
 import { useSceneController } from './hooks/useSceneController.js';
+import { useTldrawBridge } from './hooks/useTldrawBridge.js';
 
 import { Header } from './components/Header.js';
 import { LayersPanel } from './components/LayersPanel.js';
@@ -22,6 +23,7 @@ export function App() {
   const [isLayersOpen, setIsLayersOpen] = useState(true);
   const [isActivityOpen, setIsActivityOpen] = useState(true);
 
+  const [editor, setEditor] = useState<Editor | null>(null);
   const editorRef = useRef<Editor | null>(null);
   const customShapeUtils = useMemo(() => [VitraArtboardShapeUtil], []);
 
@@ -35,10 +37,22 @@ export function App() {
     sendWsMessageRef.current({ type: 'mutation', event });
   }, []);
 
-   const scene = useSceneController({
+  const scene = useSceneController({
     editorRef,
     sendWsMutation,
     addActivityEvent: addEvent,
+  });
+
+  useTldrawBridge({
+    editor,
+    editorRef,
+    store: scene.store,
+    storeRef: scene.storeRef,
+    layouts: scene.layouts,
+    handleInsertNode: scene.handleInsertNode,
+    handleDeleteNode: scene.handleDeleteNode,
+    selectedNodeId: scene.selectedNodeId,
+    setSelectedNodeId: scene.setSelectedNodeId,
   });
 
    const {
@@ -153,8 +167,9 @@ export function App() {
           <div className="absolute inset-0">
             <Tldraw
               shapeUtils={customShapeUtils}
-              onMount={(editor) => {
-                editorRef.current = editor;
+              onMount={(mountedEditor) => {
+                editorRef.current = mountedEditor;
+                setEditor(mountedEditor);
                 if (scene.storeRef.current) {
                   void scene.updateLayouts(scene.storeRef.current);
                 }

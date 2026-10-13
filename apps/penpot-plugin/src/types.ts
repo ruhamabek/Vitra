@@ -8,8 +8,13 @@ export interface PenpotNativeShape {
   y?: number;
   width?: number;
   height?: number;
-  fills?: Array<{ fillColor?: string }>;
-  strokes?: Array<{ strokeColor?: string; strokeWidth?: number }>;
+  fills?: Array<{ fillColor?: string; color?: string }>;
+  fillColor?: string;
+  fill?: string;
+  strokes?: Array<{ strokeColor?: string; color?: string; strokeWidth?: number; width?: number }>;
+  strokeColor?: string;
+  stroke?: string;
+  strokeWidth?: number;
   borderRadius?: number;
   layout?: string;
   flexDirection?: string;
@@ -20,11 +25,14 @@ export interface PenpotNativeShape {
   padding?: { top?: number; right?: number; bottom?: number; left?: number };
   characters?: string;
   text?: string;
+  content?: string;
   fontSize?: number | string;
   fontWeight?: string;
   lineHeight?: number;
   growType?: 'auto-width' | 'auto-height' | 'none';
+  parent?: PenpotNativeShape;
   children?: PenpotNativeShape[];
+  shapes?: PenpotNativeShape[];
   layoutChild?: {
     horizontalSizing?: 'auto' | 'fill' | 'fix';
     verticalSizing?: 'auto' | 'fill' | 'fix';
@@ -43,10 +51,14 @@ export interface PenpotPluginApi {
     on?: (event: string, handler: (msg: UiToPenpotMessage) => void) => void;
   };
   selection?: PenpotNativeShape[];
+  root?: PenpotNativeShape;
   currentPage?: {
     id?: string;
     name?: string;
+    root?: PenpotNativeShape;
+    children?: PenpotNativeShape[];
     shapes?: PenpotNativeShape[];
+    findShapes?: (criteria?: Record<string, unknown> | ((shape: PenpotNativeShape) => boolean)) => PenpotNativeShape[];
   };
   createBoard: () => PenpotNativeShape;
   createText: (text: string) => PenpotNativeShape;

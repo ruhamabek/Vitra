@@ -26,7 +26,7 @@ export function GitDiffModal({ isOpen, gitDiff, onClose }: GitDiffModalProps) {
           <div className="flex items-center gap-2">
             <FileDiff size={16} className="text-pink-400" />
             <span className="text-foreground text-sm font-bold">
-              Visual Diff vs HEAD
+              {gitDiff.title || 'Visual Diff vs HEAD'}
             </span>
           </div>
           <button

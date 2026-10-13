@@ -14,6 +14,7 @@ export interface ActivityEvent {
 }
 
 export interface GitDiffResult {
+  title?: string;
   added: string[];
   modified: string[];
   deleted: string[];
